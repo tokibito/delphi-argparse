@@ -1,0 +1,8 @@
+syntax: glob
+*.exe
+*.swp
+*.dcu
+*.xml
+
+syntax: regexp
+Example\/ArgumentParserExample$
