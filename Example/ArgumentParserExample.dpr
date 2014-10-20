@@ -2,9 +2,16 @@ program ArgumentParserExample;
 
 {$APPTYPE CONSOLE}
 
+{$IF CompilerVersion >= 25}
+  {$LEGACYIFEND ON}
+{$IFEND}
+
 uses
+  {$IF CompilerVersion >= 23}
   System.SysUtils,
-  System.Generics.Collections,
+  {$ELSE}
+  SysUtils,
+  {$IFEND}
   Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas';
 
 var
@@ -42,7 +49,7 @@ begin
       end;
     except
       on Err: Exception do
-        Writeln(Err.ToString);
+        Writeln(Err.ClassName);
     end;
   finally
     Parser.Free;

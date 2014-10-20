@@ -2,12 +2,25 @@ unit Nullpobug.UnitTest;
 
 interface
 
+{$IF CompilerVersion >= 25}
+  {$LEGACYIFEND ON}
+{$IFEND}
+
 uses
+  {$IF CompilerVersion >= 24}
+  System.Diagnostics,
+  {$IFEND}
+  {$IF CompilerVersion >= 23}
+  System.Classes,
+  System.Contnrs,
   System.SysUtils,
-  System.StrUtils,
-  System.Generics.Collections,
-  System.Rtti,
-  System.Diagnostics;
+  System.StrUtils;
+  {$ELSE}
+  Classes,
+  Contnrs,
+  SysUtils,
+  StrUtils;
+  {$IFEND}
 
 type
   EAssertionError = class(Exception);
@@ -36,7 +49,7 @@ type
   end;
 
   TOnRanTestMethod = procedure(TestResult: TTestResult) of object;
-  TTestProc = reference to procedure;
+  TTestProc = procedure of object;
   TExceptionClass = class of Exception;
 
   TTestCase = class(TObject)
@@ -56,11 +69,13 @@ type
     procedure AssertEquals(Value1, Value2: UInt64); overload; virtual;
     procedure AssertEquals(Value1, Value2: ShortString); overload; virtual;
     procedure AssertEquals(Value1, Value2: String); overload; virtual;
+    {$IFDEF UNICODE}
     procedure AssertEquals(Value1, Value2: RawByteString); overload; virtual;
+    {$ENDIF}
     procedure AssertIsNil(Value: TObject); virtual;
     procedure AssertIsNotNil(Value: TObject); virtual;
     procedure AssertRaises(ExceptionClass: TExceptionClass; Proc: TTestProc); overload; virtual;
-    procedure Run(TestResultList: TObjectList<TTestResult>); virtual;
+    procedure Run(TestResultList: TObjectList); virtual;
     property OnRanTestMethod: TOnRanTestMethod read FOnRanTestMethod write FOnRanTestMethod;
   end;
 
@@ -68,22 +83,24 @@ type
 
   TTestSuite = class(TObject)
   private
-    FTestCaseList: TObjectList<TTestCase>;
+    FTestCaseList: TObjectList;
     FOnRanTestMethod: TOnRanTestMethod;
   public
     constructor Create;
     destructor Destroy; override;
     procedure AddTestCase(TestCaseClass: TTestCaseClass);
-    procedure Run(TestCase: TTestCase; TestResultList: TObjectList<TTestResult>); virtual;
-    procedure RunTests(TestResultList: TObjectList<TTestResult>); virtual;
+    procedure Run(TestCase: TTestCase; TestResultList: TObjectList); virtual;
+    procedure RunTests(TestResultList: TObjectList); virtual;
     property OnRanTestMethod: TOnRanTestMethod read FOnRanTestMethod write FOnRanTestMethod;
   end;
 
   TTestRunner = class(TObject)
   private
-    FTestSuiteList: TObjectList<TTestSuite>;
-    FTestResultList: TObjectList<TTestResult>;
+    FTestSuiteList: TObjectList;
+    FTestResultList: TObjectList;
+    {$IF CompilerVersion >= 24}
     FStopWatch: TStopWatch;
+    {$IFEND}
     function GetResultCount(ResultType: TTestResultType): Integer;
     function GetFailureCount: Integer;
     function GetErrorCount: Integer;
@@ -96,8 +113,10 @@ type
     procedure RunTests; virtual;
     procedure SaveToXML(FileName: String);
     function IsAllGreen: Boolean;
-    property TestResultList: TObjectList<TTestResult> read FTestResultList;
+    property TestResultList: TObjectList read FTestResultList;
+    {$IF CompilerVersion >= 24}
     property StopWatch: TStopWatch read FStopWatch;
+    {$IFEND}
     property FailureCount: Integer read GetFailureCount;
     property ErrorCount: Integer read GetErrorCount;
     property SkipCount: Integer read GetSkipCount;
@@ -124,6 +143,13 @@ var
   DefaultTestSuite: TTestSuite;
 
 implementation
+
+uses
+  {$IF CompilerVersion >= 24}
+  System.RTTI;
+  {$ELSE}
+  TypInfo;
+  {$IFEND}
 
 { TestResult }
 constructor TTestResult.Create;
@@ -216,22 +242,24 @@ begin
     raise EAssertionError.CreateFmt('%s != %s', [Value1, Value2]);
 end;
 
+{$IFDEF UNICODE}
 procedure TTestCase.AssertEquals(Value1, Value2: RawByteString);
 begin
   if not (Value1 = Value2) then
     raise EAssertionError.CreateFmt('%s != %s', [Value1, Value2]);
 end;
+{$ENDIF}
 
 procedure TTestCase.AssertIsNil(Value: TObject);
 begin
   if not (Value = nil) then
-    raise EAssertionError.CreateFmt('%s is not nil.', [Value.ToString]);
+    raise EAssertionError.CreateFmt('%s is not nil.', [Value.ClassName]);
 end;
 
 procedure TTestCase.AssertIsNotNil(Value: TObject);
 begin
   if Value = nil then
-    raise EAssertionError.CreateFmt('%s is nil.', [Value.ToString]);
+    raise EAssertionError.CreateFmt('%s is nil.', [Value.ClassName]);
 end;
 
 procedure TTestCase.AssertRaises(ExceptionClass: TExceptionClass; Proc: TTestProc);
@@ -254,60 +282,126 @@ begin
     raise EAssertionError.CreateFmt('%s is not raised.', [ExceptionClass.ClassName]);
 end;
 
-procedure TTestCase.Run(TestResultList: TObjectList<TTestResult>);
-var
-  RttiContext: TRttiContext;
-  RttiType: TRttiType;
-  Method: TRttiMethod;
-  TestResult: TTestResult;
-  StopWatch: TStopWatch;
-begin
-  StopWatch := TStopWatch.Create;
-  RttiContext := TRttiContext.Create;
-  try
-    RttiType := RttiContext.GetType(ClassType);
-    for Method in RttiType.GetMethods do
-    begin
-      if LowerCase(LeftStr(Method.Name, 4)) = 'test' then
+procedure TTestCase.Run(TestResultList: TObjectList);
+
+  {$IF CompilerVersion < 24}
+  procedure RunTestMethods(AClass: TClass);
+  type
+    TMethodtableEntry = packed record
+      len: Word;
+      adr: Pointer;
+      name: ShortString;
+    end;
+    TPlainMethod = procedure of object;
+  var
+    pp: ^Pointer;
+    pMethodTable: Pointer;
+    pMethodEntry: ^TMethodTableEntry;
+    I, numEntries: Word;
+    TestResult: TTestResult;
+    VMethod: TMethod;
+    VPlainMethod: TPlainMethod absolute VMethod;
+  begin
+    if AClass = nil then Exit;
+    pp := Pointer(Integer(AClass) + vmtMethodtable);
+    pMethodTable := pp^;
+    if pMethodtable <> nil then begin
+      numEntries := PWord(pMethodTable)^;
+      pMethodEntry := Pointer(Integer(pMethodTable) + 2);
+      for I := 1 to numEntries do
       begin
-        TestResult := TTestResult.Create;
-        TestResult.ResultType := rtOk;
-        TestResult.TestMethodName := Method.Name;
-        TestResult.TestCaseName := ToString;
-        StopWatch.Reset;
-        StopWatch.Start;
-        try
+        if LowerCase(LeftStr(pMethodEntry^.Name, 4)) = 'test' then
+        begin
+          TestResult := TTestResult.Create;
+          TestResult.ResultType := rtOk;
+          TestResult.TestMethodName := pMethodEntry^.Name;
+          TestResult.TestCaseName := AClass.ClassName;
           try
-            SetUp;
-            Method.Invoke(Self, []);
-          except
-            on E: EAssertionError do
-              TestResult.Update(rtFail, E.ClassName, E.Message);
-            on E: ESkipTest do
-              TestResult.Update(rtSkip, E.ClassName, E.Message);
-            on E: Exception do
-              TestResult.Update(rtError, E.ClassName, E.Message);
+            try
+              SetUp;
+              VMethod.Code := pMethodEntry^.adr;
+              VMethod.Data := Self;
+              VPlainMethod;
+            except
+              on E: EAssertionError do
+                TestResult.Update(rtFail, E.ClassName, E.Message);
+              on E: ESkipTest do
+                TestResult.Update(rtSkip, E.ClassName, E.Message);
+              on E: Exception do
+                TestResult.Update(rtError, E.ClassName, E.Message);
+            end;
+          finally
+            TearDown;
           end;
-        finally
-          TearDown;
+          if Assigned(FOnRanTestMethod) then
+            FOnRanTestMethod(TestResult);
+          TestResultList.Add(TestResult);
         end;
-        TestResult.Time := StopWatch.ElapsedMilliseconds;
-        if Assigned(FOnRanTestMethod) then
-          FOnRanTestMethod(TestResult);
-        TestResultList.Add(TestResult);
+        pMethodEntry := Pointer(Integer(pMethodEntry) + pMethodEntry^.len);
       end;
     end;
-  finally
-    RttiContext.Free;
-    FreeAndNil(StopWatch);
+    RunTestMethods(AClass.ClassParent);
   end;
+  {$ELSE}
+  procedure RunTestMethods(AClass: TClass);
+  var
+    RttiContext: TRttiContext;
+    RttiType: TRttiType;
+    Method: TRttiMethod;
+    TestResult: TTestResult;
+    StopWatch: TStopWatch;
+  begin
+    StopWatch := TStopWatch.Create;
+    RttiContext := TRttiContext.Create;
+    try
+      RttiType := RttiContext.GetType(ClassType);
+      for Method in RttiType.GetMethods do
+      begin
+        if LowerCase(LeftStr(Method.Name, 4)) = 'test' then
+        begin
+          TestResult := TTestResult.Create;
+          TestResult.ResultType := rtOk;
+          TestResult.TestMethodName := Method.Name;
+          TestResult.TestCaseName := ToString;
+          StopWatch.Reset;
+          StopWatch.Start;
+          try
+            try
+              SetUp;
+              Method.Invoke(Self, []);
+            except
+              on E: EAssertionError do
+                TestResult.Update(rtFail, E.ClassName, E.Message);
+              on E: ESkipTest do
+                TestResult.Update(rtSkip, E.ClassName, E.Message);
+              on E: Exception do
+                TestResult.Update(rtError, E.ClassName, E.Message);
+            end;
+          finally
+            TearDown;
+          end;
+          TestResult.Time := StopWatch.ElapsedMilliseconds;
+          if Assigned(FOnRanTestMethod) then
+            FOnRanTestMethod(TestResult);
+          TestResultList.Add(TestResult);
+        end;
+      end;
+    finally
+      RttiContext.Free;
+      FreeAndNil(StopWatch);
+    end;
+  end;
+  {$IFEND}
+
+begin
+  RunTestMethods(ClassType);
 end;
 
 { TestSuite }
 constructor TTestSuite.Create;
 begin
   FOnRanTestMethod := nil;
-  FTestCaseList := TObjectList<TTestCase>.Create;
+  FTestCaseList := TObjectList.Create;
 end;
 
 destructor TTestSuite.Destroy;
@@ -321,33 +415,41 @@ begin
   FTestCaseList.Add(TestCaseClass.Create);
 end;
 
-procedure TTestSuite.Run(TestCase: TTestCase; TestResultList: TObjectList<TTestResult>);
+procedure TTestSuite.Run(TestCase: TTestCase; TestResultList: TObjectList);
 begin
   TestCase.OnRanTestMethod := FOnRanTestMethod;
   TestCase.Run(TestResultList);
   TestCase.OnRanTestMethod := nil;
 end;
 
-procedure TTestSuite.RunTests(TestResultList: TObjectList<TTestResult>);
+procedure TTestSuite.RunTests(TestResultList: TObjectList);
 var
+  I: Integer;
   TestCase: TTestCase;
 begin
-  for TestCase in FTestCaseList do
+  for I := 0 to FTestCaseList.Count - 1 do
+  begin
+    TestCase := TTestCase(FTestCaseList[I]);
     Run(TestCase, TestResultList);
+  end;
 end;
 
 { TestRunner }
 constructor TTestRunner.Create;
 begin
-  FTestSuiteList := TObjectList<TTestSuite>.Create;
-  FTestResultList := TObjectList<TTestResult>.Create;
+  FTestSuiteList := TObjectList.Create;
+  FTestResultList := TObjectList.Create;
+  {$IF CompilerVersion >= 24}
   FStopWatch := TStopWatch.Create;
   FStopWatch.Start;
+  {$IFEND}
 end;
 
 destructor TTestRunner.Destroy;
 begin
+  {$IF CompilerVersion >= 24}
   FreeAndNil(FStopWatch);
+  {$IFEND}
   FreeAndNil(FTestSuiteList);
   FreeAndNil(FTestResultList);
   inherited Destroy;
@@ -365,14 +467,19 @@ end;
 
 procedure TTestRunner.RunTests;
 var
+  I: Integer;
   TestSuite: TTestSuite;
 begin
-  for TestSuite in FTestSuiteList do
+  for I := 0 to FTestSuiteList.Count - 1 do
+  begin
+    TestSuite := TTestSuite(FTestSuiteList[I]);
     Run(TestSuite);
+  end;
 end;
 
 procedure TTestRunner.SaveToXML(FileName: String);
 var
+  I: Integer;
   Seconds: Single;
   OutputFile: Text;
   TestResult: TTestResult;
@@ -384,8 +491,9 @@ begin
     Writeln(OutputFile,
         Format('<testsuite name="%s" tests="%d" errors="%d" failures="%d" skip="%d">',
                ['default', TestResultList.Count, ErrorCount, FailureCount, SkipCount]));
-    for TestResult in TestResultList do
+    for I := 0 to TestResultList.Count - 1 do
     begin
+      TestResult := TTestResult(TestResultList[I]);
       Seconds := TestResult.Time / 1000;
       case TestResult.ResultType of
         rtOK:
@@ -425,12 +533,16 @@ end;
 
 function TTestRunner.GetResultCount(ResultType: TTestResultType): Integer;
 var
+  I: Integer;
   TestResult: TTestResult;
 begin
   Result := 0;
-  for TestResult in FTestResultList do
+  for I := 0 to FTestResultList.Count - 1 do
+  begin
+    TestResult := TTestResult(FTestResultList[I]);
     if TestResult.ResultType = ResultType then
       Inc(Result);
+  end;
 end;
 
 function TTestRunner.GetFailureCount: Integer;
@@ -451,14 +563,14 @@ end;
 { TTextTestRunner }
 function TTextTestRunner.GetReusltMessage: String;
 var
-  DetailMessageParts: TList<String>;
+  DetailMessageParts: TStringList;
   DetailMessagePart, DetailMessage: String;
 begin
   if IsAllGreen then
     Result := 'OK'
   else
     Result := 'FAILED';
-  DetailMessageParts := TList<String>.Create;
+  DetailMessageParts := TStringList.Create;
   try
     if FailureCount > 0 then
       DetailMessageParts.Add(Format('failures=%d', [FailureCount]));
@@ -519,15 +631,23 @@ end;
 
 procedure TTextTestRunner.WriteFooter;
 var
+  I: Integer;
   Seconds: Single;
   TestResult: TTestResult;
 begin
+  {$IF CompilerVersion >= 24}
   Seconds := StopWatch.ElapsedMilliseconds / 1000;
+  {$ELSE}
+  Seconds := 0.0;
+  {$IFEND}
   Writeln('');
   (* Display Error details *)
-  for TestResult in FTestResultList do
+  for I := 0 to FTestResultList.Count - 1 do
+  begin
+    TestResult := TTestResult(FTestResultList[I]);
     if TestResult.ResultType in [rtFail, rtError] then
       WriteTestResultDetail(TestResult);
+  end;
   Writeln(DupeString('-', 70));
   Writeln(Format('Ran %d tests in %.3fs', [TestResultList.Count, Seconds]));
   Writeln('');

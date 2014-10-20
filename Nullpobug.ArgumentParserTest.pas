@@ -2,19 +2,31 @@ unit Nullpobug.ArgumentParserTest;
 
 interface
 
+{$IF CompilerVersion >= 25}
+  {$LEGACYIFEND ON}
+{$IFEND}
+
 uses
+  {$IF CompilerVersion >= 23}
+  System.Classes,
   System.SysUtils,
-  System.Generics.Collections,
+  {$ELSE}
+  Classes,
+  SysUtils,
+  {$IFEND}
   Nullpobug.UnitTest,
   Nullpobug.ArgumentParser;
+
+{$TYPEINFO ON}
 
 type
   TParseResultTest = class(TTestCase)
   private
     FParseResult: TParseResult;
-  published
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestStoreBool;
     procedure TestStoreValue;
   end;
@@ -22,18 +34,20 @@ type
   TArgumentTest = class(TTestCase)
   private
     FArgument: TArgument;
-  published
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestProperty;
   end;
 
   TArgumentParserAddArgumentTest = class(TTestCase)
   private
     FArgumentParser: TArgumentParser;
-  published
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestTArgument;
     procedure TestStringParameter;
     procedure TestOmitDestName;
@@ -42,9 +56,10 @@ type
   TArgumentParserHasArgumentTest = class(TTestCase)
   private
     FArgumentParser: TArgumentParser;
-  published
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestHasBoolArgument;
     procedure TestHasStoreArgument;
   end;
@@ -52,9 +67,10 @@ type
   TArgumentParserGetArgumentTest = class(TTestCase)
   private
     FArgumentParser: TArgumentParser;
-  published
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure Test;
   end;
 
@@ -62,10 +78,11 @@ type
   private
     FArgumentParser: TArgumentParser;
     FParseResult: TParseResult;
-    FTargetArgs: TList<String>;
-  published
+    FTargetArgs: TStringList;
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestSingleHyphen;
     procedure TestDoubleHyphen;
     procedure TestNotIncluded;
@@ -75,10 +92,12 @@ type
   private
     FArgumentParser: TArgumentParser;
     FParseResult: TParseResult;
-    FTargetArgs: TList<String>;
-  published
+    FTargetArgs: TStringList;
+    procedure ProcTestNotIncluded;
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestSingleHyphen;
     procedure TestDoubleHyphen;
     procedure TestDoubleHyphenWithEqualAssignment;
@@ -89,10 +108,11 @@ type
   private
     FArgumentParser: TArgumentParser;
     FParseResult: TParseResult;
-    FTargetArgs: TList<String>;
-  published
+    FTargetArgs: TStringList;
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure Test;
   end;
 
@@ -100,9 +120,10 @@ type
   private
     FArgumentParser: TArgumentParser;
     FParseResult: TParseResult;
-  published
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure Test;
   end;
 
@@ -110,10 +131,11 @@ type
   private
     FArgumentParser: TArgumentParser;
     FParseResult: TParseResult;
-    FTargetArgs: TList<String>;
-  published
+    FTargetArgs: TStringList;
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure TestBool1;
     procedure TestBool2;
     procedure TestBoolOverwrite;
@@ -125,10 +147,11 @@ type
   private
     FArgumentParser: TArgumentParser;
     FParseResult: TParseResult;
-    FTargetArgs: TList<String>;
-  published
+    FTargetArgs: TStringList;
+  public
     procedure SetUp; override;
     procedure TearDown; override;
+  published
     procedure Test;
   end;
 
@@ -198,7 +221,7 @@ end;
 procedure TArgumentParserAddArgumentTest.TestTArgument;
 begin
   FArgumentParser.AddArgument(TArgument.Create('--foo', 'bar', saStore));
-  AssertEquals(FArgumentParser.Arguments.Count, 1);
+  AssertEquals(FArgumentParser.ArgumentsCount, 1);
   AssertEquals(FArgumentParser.Arguments[0].Option, '--foo');
   AssertEquals(FArgumentParser.Arguments[0].Dest, 'bar');
 end;
@@ -206,7 +229,7 @@ end;
 procedure TArgumentParserAddArgumentTest.TestStringParameter;
 begin
   FArgumentParser.AddArgument('--foo', 'bar', saStore);
-  AssertEquals(FArgumentParser.Arguments.Count, 1);
+  AssertEquals(FArgumentParser.ArgumentsCount, 1);
   AssertEquals(FArgumentParser.Arguments[0].Option, '--foo');
   AssertEquals(FArgumentParser.Arguments[0].Dest, 'bar');
 end;
@@ -215,7 +238,7 @@ procedure TArgumentParserAddArgumentTest.TestOmitDestName;
 begin
   FArgumentParser.AddArgument('--foo', saStore);
   FArgumentParser.AddArgument('-b', saStore);
-  AssertEquals(FArgumentParser.Arguments.Count, 2);
+  AssertEquals(FArgumentParser.ArgumentsCount, 2);
   AssertEquals(FArgumentParser.Arguments[0].Option, '--foo');
   AssertEquals(FArgumentParser.Arguments[0].Dest, 'foo');
   AssertEquals(FArgumentParser.Arguments[1].Option, '-b');
@@ -283,7 +306,7 @@ begin
   FArgumentParser.AddArgument('--bar', saBool);
   FArgumentParser.AddArgument('-b', saBool);
   FParseResult := nil;
-  FTargetArgs := TList<String>.Create;
+  FTargetArgs := TStringList.Create;
   FTargetArgs.Add('--foo');
   FTargetArgs.Add('-b');
 end;
@@ -323,7 +346,7 @@ begin
   FArgumentParser.AddArgument('-b', saStore);
   FArgumentParser.AddArgument('--hoge', saStore);
   FParseResult := nil;
-  FTargetArgs := TList<String>.Create;
+  FTargetArgs := TStringList.Create;
   FTargetArgs.Add('--foo');
   FTargetArgs.Add('foo_value');
   FTargetArgs.Add('-b');
@@ -359,16 +382,16 @@ begin
   AssertEquals(FParseResult.GetValue('hoge'), 'hoge_value');
 end;
 
+procedure TArgumentParserParseArgsStoreValueTest.ProcTestNotIncluded;
+begin
+  FParseResult.GetValue('bar');
+end;
+
 procedure TArgumentParserParseArgsStoreValueTest.TestNotIncluded;
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertFalse(FParseResult.HasArgument('bar'));
-  AssertRaises(ENoSuchArgument,
-    procedure
-    begin
-      FParseResult.GetValue('bar');
-    end
-  );
+  AssertRaises(ENoSuchArgument, Self.ProcTestNotIncluded);
 end;
 (* End of TArgumentParserParseArgsStoreValueTest *)
 
@@ -379,7 +402,7 @@ begin
   FArgumentParser.AddArgument('--foo', saBool);
   FArgumentParser.AddArgument('--bar', saStore);
   FParseResult := nil;
-  FTargetArgs := TList<String>.Create;
+  FTargetArgs := TStringList.Create;
   FTargetArgs.Add('value1');
   FTargetArgs.Add('value2');
   FTargetArgs.Add('value3');
@@ -431,7 +454,7 @@ begin
   FArgumentParser.AddArgument('--bar', 'bar', saStore);
   FArgumentParser.AddArgument('-b', 'bar', saStore);
   FParseResult := nil;
-  FTargetArgs := TList<String>.Create;
+  FTargetArgs := TStringList.Create;
 end;
 
 procedure TArgumentParserParseArgsSameDestinationTest.TearDown;
@@ -486,7 +509,7 @@ begin
   FArgumentParser.AddArgument('--foo', saBool);
   FArgumentParser.AddArgument('--bar', saStore);
   FParseResult := nil;
-  FTargetArgs := TList<String>.Create;
+  FTargetArgs := TStringList.Create;
   FTargetArgs.Add('--foo');
   FTargetArgs.Add('--bar');
   FTargetArgs.Add('bar_value');
@@ -515,7 +538,7 @@ end;
 (* TGetParamStrAsListTest *)
 procedure TGetParamStrAsListTest.TestIncludingAppName;
 var
-  Params: TList<String>;
+  Params: TStringList;
 begin
   Params := GetParamStrAsList;
   AssertEquals(Params.Count, 1);
@@ -524,7 +547,7 @@ end;
 
 procedure TGetParamStrAsListTest.TestNotIncludingAppName;
 var
-  Params: TList<String>;
+  Params: TStringList;
 begin
   Params := GetParamStrAsList(False);
   AssertEquals(Params.Count, 0);
