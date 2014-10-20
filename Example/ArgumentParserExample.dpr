@@ -17,7 +17,6 @@ begin
   Parser := TArgumentParser.Create;
   try
     try
-      // 引数を追加
       Parser.AddArgument('--help', saBool);
       Parser.AddArgument('--foo', saBool);
       Parser.AddArgument('--bar', 'bar', saStore);

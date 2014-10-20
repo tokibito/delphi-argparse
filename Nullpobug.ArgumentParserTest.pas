@@ -153,14 +153,12 @@ begin
 end;
 
 procedure TParseResultTest.TestStoreBool;
-(* キーのみのオプションを保持できること *)
 begin
   FParseResult.StoreBool('foo');
   AssertTrue(FParseResult.HasArgument('foo'));
 end;
 
 procedure TParseResultTest.TestStoreValue;
-(* キーと値のオプションを保持できること *)
 begin
   FParseResult.StoreValue('foo', 'bar');
   AssertTrue(FParseResult.HasArgument('foo'));
@@ -180,7 +178,6 @@ begin
 end;
 
 procedure TArgumentTest.TestProperty;
-(* プロパティで値を取得できること *)
 begin
   AssertEquals(FArgument.Option, '--foo');
   AssertEquals(FArgument.Dest, 'foo');
@@ -200,7 +197,6 @@ begin
 end;
 
 procedure TArgumentParserAddArgumentTest.TestTArgument;
-(* TArgumentのインスタンスを追加できること *)
 begin
   FArgumentParser.AddArgument(TArgument.Create('--foo', 'bar', saStore));
   AssertEquals(FArgumentParser.Arguments.Count, 1);
@@ -209,7 +205,6 @@ begin
 end;
 
 procedure TArgumentParserAddArgumentTest.TestStringParameter;
-(* 文字列のパラメータで追加できること *)
 begin
   FArgumentParser.AddArgument('--foo', 'bar', saStore);
   AssertEquals(FArgumentParser.Arguments.Count, 1);
@@ -218,7 +213,6 @@ begin
 end;
 
 procedure TArgumentParserAddArgumentTest.TestOmitDestName;
-(* Dest名を省略して追加できること *)
 begin
   FArgumentParser.AddArgument('--foo', saStore);
   FArgumentParser.AddArgument('-b', saStore);
@@ -244,7 +238,6 @@ begin
 end;
 
 procedure TArgumentParserHasArgumentTest.TestHasBoolArgument;
-(* saBoolの引数が登録されていることを取得できる *)
 begin
   AssertTrue(FArgumentParser.HasArgument('--foo', saBool));
   AssertFalse(FArgumentParser.HasArgument('--bar', saBool));
@@ -252,7 +245,6 @@ begin
 end;
 
 procedure TArgumentParserHasArgumentTest.TestHasStoreArgument;
-(* saStoreの引数が登録されていることを取得できる *)
 begin
   AssertTrue(FArgumentParser.HasArgument('--bar', saStore));
   AssertFalse(FArgumentParser.HasArgument('--foo', saStore));
@@ -274,7 +266,6 @@ begin
 end;
 
 procedure TArgumentParserGetArgumentTest.Test;
-(* 指定したOptionのArgumentオブジェクトを取得できること *)
 var
   Argument: TArgument;
 begin
@@ -306,21 +297,18 @@ begin
 end;
 
 procedure TArgumentParserParseArgsOnlySwitchTest.TestSingleHyphen;
-(* ハイフン1つの場合に正常に取得できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertTrue(FParseResult.HasArgument('b'));
 end;
 
 procedure TArgumentParserParseArgsOnlySwitchTest.TestDoubleHyphen;
-(* ハイフン2つの場合に正常に取得できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertTrue(FParseResult.HasArgument('foo'));
 end;
 
 procedure TArgumentParserParseArgsOnlySwitchTest.TestNotIncluded;
-(* 対象に含まれないものを検出できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertFalse(FParseResult.HasArgument('bar'));
@@ -352,7 +340,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsStoreValueTest.TestSingleHyphen;
-(* ハイフン1つの場合に正常に取得できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertTrue(FParseResult.HasArgument('b'));
@@ -360,7 +347,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsStoreValueTest.TestDoubleHyphen;
-(* ハイフン2つの場合に正常に取得できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertTrue(FParseResult.HasArgument('foo'));
@@ -368,7 +354,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsStoreValueTest.TestDoubleHyphenWithEqualAssignment;
-(* =で指定された値を取得できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertTrue(FParseResult.HasArgument('hoge'));
@@ -376,7 +361,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsStoreValueTest.TestNotIncluded;
-(* 対象に含まれないものを検出できる *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertFalse(FParseResult.HasArgument('bar'));
@@ -410,7 +394,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsUnnamedArgsTest.Test;
-(* スイッチがない場合は無名の引数リストに値が保持jされること *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertEquals(FParseResult.Args.Count, 3);
@@ -434,7 +417,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsNoParameterTest.Test;
-(* 引数なしで実行してパラメータの数を取得できること *)
 begin
   FParseResult := FArgumentParser.ParseArgs;
   AssertEquals(FParseResult.Args.Count, 0);
@@ -461,7 +443,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsSameDestinationTest.TestBool1;
-(* 同一DestでBoolean値の場合に値が保持されること1 *)
 begin
   FTargetArgs.Add('--foo');
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
@@ -469,7 +450,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsSameDestinationTest.TestBool2;
-(* 同一DestでBoolean値の場合に値が保持されること2 *)
 begin
   FTargetArgs.Add('-f');
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
@@ -477,7 +457,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsSameDestinationTest.TestBoolOverwrite;
-(* 同一DestでBoolean値の場合両方指定されても動作すること *)
 begin
   FTargetArgs.Add('--foo');
   FTargetArgs.Add('-f');
@@ -486,7 +465,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsSameDestinationTest.TestStore1;
-(* 同一Destで文字列値の場合値が保持されること1 *)
 begin
   FTargetArgs.Add('--bar=bar_value');
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
@@ -494,7 +472,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsSameDestinationTest.TestStore2;
-(* 同一Destで文字列値の場合値が保持されること2 *)
 begin
   FTargetArgs.Add('-b');
   FTargetArgs.Add('bar_value');
@@ -526,7 +503,6 @@ begin
 end;
 
 procedure TArgumentParserParseArgsSwitchAndArgsTest.Test;
-(* スイッチ+無名引数の場合に値が保持されること *)
 begin
   FParseResult := FArgumentParser.ParseArgs(FTargetArgs);
   AssertTrue(FParseResult.HasArgument('foo'));
@@ -539,7 +515,6 @@ end;
 
 (* TGetParamStrAsListTest *)
 procedure TGetParamStrAsListTest.TestIncludingAppName;
-(* 実行ファイル名が含まれる場合 *)
 var
   Params: TList<String>;
 begin
@@ -549,7 +524,6 @@ begin
 end;
 
 procedure TGetParamStrAsListTest.TestNotIncludingAppName;
-(* 実行ファイル名が含まれない場合 *)
 var
   Params: TList<String>;
 begin
