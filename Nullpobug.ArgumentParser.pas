@@ -3,10 +3,9 @@ unit Nullpobug.ArgumentParser;
 interface
 
 uses
-  System.SysUtils
-  , System.StrUtils
-  , System.Generics.Collections
-  ;
+  System.SysUtils,
+  System.StrUtils,
+  System.Generics.Collections;
 
 type
   ENoMatchArgument = class(Exception);

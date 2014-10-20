@@ -3,16 +3,14 @@ program ArgumentParserExample;
 {$APPTYPE CONSOLE}
 
 uses
-  Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas'
-  , System.SysUtils
-  , System.Generics.Collections
-  ;
+  System.SysUtils,
+  System.Generics.Collections,
+  Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas';
 
 var
   Parser: TArgumentParser;
   ParseResult: TParseResult;
   I: Integer;
-
 begin
   Parser := TArgumentParser.Create;
   try

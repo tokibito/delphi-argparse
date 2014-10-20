@@ -3,11 +3,10 @@ unit Nullpobug.ArgumentParserTest;
 interface
 
 uses
-  System.SysUtils
-  , System.Generics.Collections
-  , Nullpobug.UnitTest
-  , Nullpobug.ArgumentParser
-  ;
+  System.SysUtils,
+  System.Generics.Collections,
+  Nullpobug.UnitTest,
+  Nullpobug.ArgumentParser;
 
 type
   TParseResultTest = class(TTestCase)

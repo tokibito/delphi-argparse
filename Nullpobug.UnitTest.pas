@@ -3,12 +3,11 @@ unit Nullpobug.UnitTest;
 interface
 
 uses
-  System.SysUtils
-  , System.StrUtils
-  , System.Generics.Collections
-  , System.Rtti
-  , System.Diagnostics
-  ;
+  System.SysUtils,
+  System.StrUtils,
+  System.Generics.Collections,
+  System.Rtti,
+  System.Diagnostics;
 
 type
   EAssertionError = class(Exception);
