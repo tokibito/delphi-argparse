@@ -9,6 +9,4 @@ uses
 
 begin
   Nullpobug.UnitTest.RunTest('ArgumentParserTest.xml');
-  Writeln('Press Enter to exit...');
-  Readln;
 end.
