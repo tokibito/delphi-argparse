@@ -2,22 +2,26 @@ program ArgumentParserExample;
 
 {$APPTYPE CONSOLE}
 
+{$IF CompilerVersion >= 25}
+  {$LEGACYIFEND ON}
+{$IFEND}
+
 uses
-  Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas'
-  , System.SysUtils
-  , System.Generics.Collections
-  ;
+  {$IF CompilerVersion >= 23}
+  System.SysUtils,
+  {$ELSE}
+  SysUtils,
+  {$IFEND}
+  Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas';
 
 var
   Parser: TArgumentParser;
   ParseResult: TParseResult;
   I: Integer;
-
 begin
   Parser := TArgumentParser.Create;
   try
     try
-      // 引数を追加
       Parser.AddArgument('--help', saBool);
       Parser.AddArgument('--foo', saBool);
       Parser.AddArgument('--bar', 'bar', saStore);
@@ -45,7 +49,7 @@ begin
       end;
     except
       on Err: Exception do
-        Writeln(Err.ToString);
+        Writeln(Err.ClassName);
     end;
   finally
     Parser.Free;

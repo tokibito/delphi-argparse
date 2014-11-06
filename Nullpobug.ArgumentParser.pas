@@ -2,35 +2,56 @@ unit Nullpobug.ArgumentParser;
 
 interface
 
+{$IF CompilerVersion >= 25}
+  {$LEGACYIFEND ON}
+{$IFEND}
+
 uses
-  System.SysUtils
-  , System.StrUtils
-  , System.Generics.Collections
-  ;
+  {$IF CompilerVersion >= 23}
+  System.Classes,
+  System.Contnrs,
+  System.SysUtils,
+  System.StrUtils;
+  {$ELSE}
+  Classes,
+  Contnrs,
+  SysUtils,
+  StrUtils;
+  {$IFEND}
 
 type
-  ENoMatchArgument = class(Exception);  // 一致する引数がありません
-  EInvalidArgument = class(Exception);  // 不正な引数です
-  EParameterMissing = class(Exception);  // パラメータが不足しています
-  ENoSuchArgument = class(Exception);  // そのような引数はありません
+  ENoMatchArgument = class(Exception);
+  EInvalidArgument = class(Exception);
+  EParameterMissing = class(Exception);
+  ENoSuchArgument = class(Exception);
 
   TStoreAction = (saBool, saStore);
 
+  TStringListContainer = class(TStringList)
+  private
+    function GetValue(const Key: String): String;
+    procedure SetValue(const Key, Value: String);
+  public
+    property Values[const Key: String]: String read GetValue write SetValue; default;
+    function Add(const Key, Value: String): Integer; reintroduce;
+    function ContainsKey(const Key: String): Boolean;
+  end;
+
   TParseResult = class
   private
-    FStoredValues: TDictionary<String, String>;
-    FStoredBools: TList<String>;
-    FUnnamedValues: TList<String>;
+    FStoredValues: TStringListContainer;
+    FStoredBools: TStringList;
+    FUnnamedValues: TStringList;
   public
     constructor Create;
     destructor Destroy; override;
-    function HasArgument(Dest: String): Boolean;
-    function GetValue(Dest: String): String;
-    procedure StoreBool(Dest: String);
-    procedure StoreValue(Dest: String; Value: String);
-    property StoredBools: TList<String> read FStoredBools;
-    property StoredValues: TDictionary<String, String> read FStoredValues;
-    property Args: TList<String> read FUnnamedValues;
+    function HasArgument(const Dest: String): Boolean;
+    function GetValue(const Dest: String): String;
+    procedure StoreBool(const Dest: String);
+    procedure StoreValue(const Dest: String; const Value: String);
+    property StoredBools: TStringList read FStoredBools;
+    property StoredValues: TStringListContainer read FStoredValues;
+    property Args: TStringList read FUnnamedValues;
   end;
 
   TArgument = class
@@ -39,7 +60,7 @@ type
     FDest: String;
     FStoreAction: TStoreAction;
   public
-    constructor Create(Option, Dest: String; StoreAction: TStoreAction);
+    constructor Create(const Option, Dest: String; StoreAction: TStoreAction);
     destructor Destroy; override;
     property Option: String read FOption;
     property Dest: String read FDest;
@@ -49,34 +70,63 @@ type
   TArgumentParser = class
   private
     FDescription: String;
-    FArguments: TObjectList<TArgument>;
+    FArguments: TObjectList;
+    function GetArgumentsCount: Integer;
   public
-    constructor Create(Description: String = '');
+    constructor Create(const Description: String = '');
     destructor Destroy; override;
     function ParseArgs: TParseResult; overload;
-    function ParseArgs(TargetArgs: TList<String>): TParseResult; overload;
-    procedure AddArgument(Argument: TArgument); overload;
-    procedure AddArgument(Option, Dest: String;
+    function ParseArgs(const TargetArgs: TStringList): TParseResult; overload;
+    procedure AddArgument(const Argument: TArgument); overload;
+    procedure AddArgument(const Option, Dest: String;
         StoreAction: TStoreAction = saBool); overload;
-    procedure AddArgument(Option: String;
+    procedure AddArgument(const Option: String;
         StoreAction: TStoreAction = saBool); overload;
-    function HasArgument(Option: String;
+    function HasArgument(const Option: String;
         StoreAction: TStoreAction = saBool): Boolean;
-    function GetArgument(Option: String): TArgument;
+    function GetArgument(const Option: String): TArgument; overload;
+    function GetArgument(Index: Integer): TArgument; overload;
     property Description: String read FDescription write FDescription;
-    property Arguments: TObjectList<TArgument> read FArguments;
+    property ArgumentsCount: Integer read GetArgumentsCount;
+    property Arguments[Index: Integer]: TArgument read GetArgument;
   end;
 
-function GetParamStrAsList(IsIncludingAppName: Boolean = True): TList<String>;
+function GetParamStrAsList(IsIncludingAppName: Boolean = True): TStringList;
 
 implementation
+
+{ TStringListContainer }
+
+function TStringListContainer.GetValue(const Key: String): String;
+begin
+  Result := inherited Values[Key];
+end;
+
+procedure TStringListContainer.SetValue(const Key, Value: String);
+begin
+  if (Values[Key] <> '') and (Value <> '') then
+    inherited Values[Key] := Values[Key] + ' ' + Value
+  else
+    inherited Values[Key] := Value;
+end;
+
+function TStringListContainer.Add(const Key, Value: String): Integer;
+begin
+  Result := inherited Add(Key);
+  SetValue(Key, Value);
+end;
+
+function TStringListContainer.ContainsKey(const Key: String): Boolean;
+begin
+  Result := Values[Key] <> '';
+end;
 
 (* TParseResult *)
 constructor TParseResult.Create;
 begin
-  FStoredValues := TDictionary<String, String>.Create;
-  FStoredBools := TList<String>.Create;
-  FUnnamedValues := TList<String>.Create;
+  FStoredValues := TStringListContainer.Create;
+  FStoredBools := TStringList.Create;
+  FUnnamedValues := TStringList.Create;
 end;
 
 destructor TParseResult.Destroy;
@@ -87,19 +137,12 @@ begin
   inherited Destroy;
 end;
 
-function TParseResult.HasArgument(Dest: String): Boolean;
-(*
-  Destで指定したオプションが含まれるかどうかを返す
-  True: 含まれる, False: 含まれない
- *)
+function TParseResult.HasArgument(const Dest: String): Boolean;
 begin
   Result := (FStoredBools.IndexOf(Dest) <> -1) or FStoredValues.ContainsKey(Dest);
 end;
 
-function TParseResult.GetValue(Dest: String): String;
-(*
-  Destで指定したオプションの値を返す
- *)
+function TParseResult.GetValue(const Dest: String): String;
 begin
   if HasArgument(Dest) then
     Result := FStoredValues[Dest]
@@ -107,19 +150,13 @@ begin
     raise ENoSuchArgument.CreateFmt('No such argument "%s"', [Dest]);
 end;
 
-procedure TParseResult.StoreBool(Dest: String);
-(*
-  真偽値で保持する値を追加する
- *)
+procedure TParseResult.StoreBool(const Dest: String);
 begin
   if not HasArgument(Dest) then
     FStoredBools.Add(Dest);
 end;
 
-procedure TParseResult.StoreValue(Dest: String; Value: String);
-(*
-  キーと値で保持する値を追加する
- *)
+procedure TParseResult.StoreValue(const Dest: String; const Value: String);
 begin
   if not HasArgument(Dest) then
     FStoredValues.Add(Dest, Value);
@@ -127,7 +164,7 @@ end;
 (* End of TParseResult *)
 
 (* TArgument *)
-constructor TArgument.Create(Option, Dest: String; StoreAction: TStoreAction);
+constructor TArgument.Create(const Option, Dest: String; StoreAction: TStoreAction);
 begin
   FOption := Option;
   FDest := Dest;
@@ -141,10 +178,10 @@ end;
 (* End of TArgument *)
 
 (* TArgumentParser *)
-constructor TArgumentParser.Create(Description: String = '');
+constructor TArgumentParser.Create(const Description: String = '');
 begin
   FDescription := Description;
-  FArguments := TObjectList<TArgument>.Create;
+  FArguments := TObjectList.Create;
 end;
 
 destructor TArgumentParser.Destroy;
@@ -155,9 +192,8 @@ end;
 
 function TArgumentParser.ParseArgs: TParseResult;
 var
-  Params: TList<String>;
+  Params: TStringList;
 begin
-  (* 実行ファイル名を除いたパラメータを取得 *)
   Params := GetParamStrAsList(False);
   try
     Result := ParseArgs(Params);
@@ -166,7 +202,7 @@ begin
   end;
 end;
 
-function TArgumentParser.ParseArgs(TargetArgs: TList<String>): TParseResult;
+function TArgumentParser.ParseArgs(const TargetArgs: TStringList): TParseResult;
 var
   CurrentIndex: Integer;
   CurrentParam: String;
@@ -178,22 +214,16 @@ begin
   CurrentIndex := 0;
   while CurrentIndex < TargetArgs.Count do
   begin
-    (* 現在位置のパラメータを取得 *)
     CurrentParam := TargetArgs[CurrentIndex];
-    (* 先頭が-で始まるか *)
     if LeftStr(CurrentParam, 1) = '-' then
     begin
-      (* パラメータ名に=の文字が含まれているか *)
       SeparatorPosition := Pos('=', CurrentParam);
       if SeparatorPosition <> 0 then
       begin
-        (* 含まれているならKeyとValueに分割する *)
         Key := LeftStr(CurrentParam, SeparatorPosition - 1);
         Value := RightStr(CurrentParam, Length(CurrentParam) - SeparatorPosition);
-        (* Keyがパーサーに含まれているか *)
         if HasArgument(Key, saStore) then
         begin
-          (* 含まれているなら結果に保持 *)
           Argument := GetArgument(Key);
           Result.StoreValue(Argument.Dest, Value);
         end
@@ -202,26 +232,19 @@ begin
       end
       else
       begin
-        (* 含まれていないならKeyとする *)
         Key := CurrentParam;
-        (* Keyがパーサーに含まれているか(Bool) *)
         if HasArgument(Key, saBool) then
         begin
-          (* 含まれているなら結果に保持 *)
           Argument := GetArgument(Key);
           Result.StoreBool(Argument.Dest);
         end
         else
-          (* Keyがパーサーに含まれているか(Store) *)
           if HasArgument(Key, saStore) then
           begin
-            (* 含まれているなら次のパラメータを値として取得する *)
             Inc(CurrentIndex);
-            (* 後ろにパラメータが無ければエラー *)
             if CurrentIndex >= TargetArgs.Count then
               raise EParameterMissing.CreateFmt('Missing value for "%s"', [Key]);
             Value := TargetArgs[CurrentIndex];
-            (* 結果に保持 *)
             Argument := GetArgument(Key);
             Result.StoreValue(Argument.Dest, Value);
           end
@@ -231,24 +254,20 @@ begin
     end
     else
     begin
-      (* スイッチ以外の場合はそのまま値として追加する *)
       Value := TargetArgs[CurrentIndex];
       Result.Args.Add(Value);
     end;
-    (* 参照位置を一つ後ろにする *)
     Inc(CurrentIndex);
   end;
 end;
 
-procedure TArgumentParser.AddArgument(Argument: TArgument);
-(* Argumentを追加する *)
+procedure TArgumentParser.AddArgument(const Argument: TArgument);
 begin
   FArguments.Add(Argument);
 end;
 
-procedure TArgumentParser.AddArgument(Option, Dest: String;
+procedure TArgumentParser.AddArgument(const Option, Dest: String;
     StoreAction: TStoreAction = saBool);
-(* Option, Dest, StoreActionパラメータでTArgumentのインスタンスを生成して追加 *)
 var
   Argument: TArgument;
 begin
@@ -256,12 +275,11 @@ begin
   AddArgument(Argument);
 end;
 
-procedure TArgumentParser.AddArgument(Option: String; StoreAction: TStoreAction = saBool);
-(* DestをOptionと同じ名前(ハイフンは除去)でパラメータでTArgumentのインスタンスを生成して追加 *)
+procedure TArgumentParser.AddArgument(const Option: String;
+    StoreAction: TStoreAction = saBool);
 var
   Dest: String;
 begin
-  (* 先頭の--と-を除去する *)
   if LeftStr(Option, 2) = '--' then
     Dest := Copy(Option, 3, Length(Option) - 2)
   else if LeftStr(Option, 1) = '-' then
@@ -271,52 +289,58 @@ begin
   AddArgument(Option, Dest, StoreAction);
 end;
 
-function TArgumentParser.HasArgument(Option: String;
+function TArgumentParser.HasArgument(const Option: String;
     StoreAction: TStoreAction = saBool): Boolean;
-(*
-  指定されたOptionとStoreActionに一致する引数が登録されていればTrueを返す
- *)
 var
+  I: Integer;
   Argument: TArgument;
 begin
-  for Argument in Arguments do
+  for I := 0 to ArgumentsCount - 1 do begin
+    Argument := Arguments[I];
     if (Argument.Option = Option) and (Argument.StoreAction = StoreAction) then
     begin
       Result := True;
       Exit;
     end;
+  end;
   Result := False;
 end;
 
-function TArgumentParser.GetArgument(Option: String): TArgument;
-(*
-  Optionで指定された引数を返す
-  見つからない場合はENoMatchArgument例外を発生させる
- *)
+function TArgumentParser.GetArgument(const Option: String): TArgument;
 var
+  I: Integer;
   Argument: TArgument;
 begin
-  for Argument in Arguments do
+  for I := 0 to ArgumentsCount - 1 do begin
+    Argument := Arguments[I];
     if Argument.Option = Option then
     begin
       Result := Argument;
       Exit;
     end;
+  end;
   raise ENoMatchArgument.CreateFmt('No such argument "%s"', [Option]);
 end;
+
+function TArgumentParser.GetArgumentsCount: Integer;
+begin
+  Result := FArguments.Count;
+end;
+
+function TArgumentParser.GetArgument(Index: Integer): TArgument;
+begin
+  Result := TArgument(FArguments[Index]);
+end;
+
 (* End of TArgumentParser *)
 
 (* Utility function *)
-function GetParamStrAsList(IsIncludingAppName: Boolean = True): TList<String>;
-(*
-  ParamStrをTList<String>形式で返す関数
-  IsIncludingAppNameにFalseを指定するとプログラム名を含めない
- *)
+function GetParamStrAsList(IsIncludingAppName: Boolean = True): TStringList;
 var
   I: Integer;
   StartIndex: Integer;
 begin
-  Result := TList<String>.Create;
+  Result := TStringList.Create;
   if IsIncludingAppName then
     StartIndex := 0
   else
