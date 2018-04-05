@@ -1,18 +1,28 @@
 program ArgumentParserExample;
 
+{$IFDEF FPC}
+  {$MODE DELPHI}
+{$ENDIF}
+
 {$APPTYPE CONSOLE}
 
-{$IF CompilerVersion >= 25}
-  {$LEGACYIFEND ON}
-{$IFEND}
+{$IFNDEF FPC}
+  {$IF CompilerVersion >= 25}
+    {$LEGACYIFEND ON}
+  {$IFEND}
+{$ENDIF}
 
 uses
-  {$IF CompilerVersion >= 23}
-  System.SysUtils,
+  {$IFNDEF FPC}
+    {$IF CompilerVersion >= 23}
+    System.SysUtils,
+    {$ELSE}
+    SysUtils,
+    {$IFEND}
   {$ELSE}
-  SysUtils,
-  {$IFEND}
-  Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas';
+    SysUtils,
+  {$ENDIF}
+  Nullpobug.ArgumentParser in '..\..\common\Nullpobug.ArgumentParser.pas';
 
 var
   Parser: TArgumentParser;

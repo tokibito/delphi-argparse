@@ -7,7 +7,7 @@ Command line argument parser for Delphi.
 Requirements
 ============
 
-* Delphi 2007
+* Delphi 2007 or FPC
 
 License
 =======
