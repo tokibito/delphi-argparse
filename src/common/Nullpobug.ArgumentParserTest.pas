@@ -1,19 +1,30 @@
 unit Nullpobug.ArgumentParserTest;
 
+{$IFDEF FPC}
+{$MODE Delphi}
+{$ENDIF}
+
 interface
 
-{$IF CompilerVersion >= 25}
-  {$LEGACYIFEND ON}
-{$IFEND}
+{$IFNDEF FPC}
+  {$IF CompilerVersion >= 25}
+    {$LEGACYIFEND ON}
+  {$IFEND}
+{$ENDIF}
 
 uses
-  {$IF CompilerVersion >= 23}
-  System.Classes,
-  System.SysUtils,
+  {$IFNDEF FPC}
+    {$IF CompilerVersion >= 23}
+    System.Classes,
+    System.SysUtils,
+    {$ELSE}
+    Classes,
+    SysUtils,
+    {$IFEND}
   {$ELSE}
   Classes,
   SysUtils,
-  {$IFEND}
+  {$ENDIF}
   Nullpobug.UnitTest,
   Nullpobug.ArgumentParser;
 
