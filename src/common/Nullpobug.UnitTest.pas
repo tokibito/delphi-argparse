@@ -161,15 +161,13 @@ var
 
 implementation
 
-uses
   {$IFNDEF FPC}
+  uses
     {$IF CompilerVersion >= 24}
     System.RTTI;
     {$ELSE}
     TypInfo;
     {$IFEND}
-  {$ELSE}
-    Rtti;
   {$ENDIF}
 
 { TestResult }
