@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="default" tests="26" errors="0" failures="0" skip="0">
+<testcase classname="TParseResultTest" name="TestStoreBool" time="0,000"/>
+<testcase classname="TParseResultTest" name="TestStoreValue" time="0,000"/>
+<testcase classname="TArgumentTest" name="TestProperty" time="0,000"/>
+<testcase classname="TArgumentParserAddArgumentTest" name="TestTArgument" time="0,000"/>
+<testcase classname="TArgumentParserAddArgumentTest" name="TestStringParameter" time="0,000"/>
+<testcase classname="TArgumentParserAddArgumentTest" name="TestOmitDestName" time="0,000"/>
+<testcase classname="TArgumentParserHasArgumentTest" name="TestHasBoolArgument" time="0,000"/>
+<testcase classname="TArgumentParserHasArgumentTest" name="TestHasStoreArgument" time="0,000"/>
+<testcase classname="TArgumentParserGetArgumentTest" name="Test" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsOnlySwitchTest" name="TestSingleHyphen" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsOnlySwitchTest" name="TestDoubleHyphen" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsOnlySwitchTest" name="TestNotIncluded" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsStoreValueTest" name="TestSingleHyphen" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsStoreValueTest" name="TestDoubleHyphen" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsStoreValueTest" name="TestDoubleHyphenWithEqualAssignment" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsStoreValueTest" name="TestNotIncluded" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsUnnamedArgsTest" name="Test" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsNoParameterTest" name="Test" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsSameDestinationTest" name="TestBool1" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsSameDestinationTest" name="TestBool2" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsSameDestinationTest" name="TestBoolOverwrite" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsSameDestinationTest" name="TestStore1" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsSameDestinationTest" name="TestStore2" time="0,000"/>
+<testcase classname="TArgumentParserParseArgsSwitchAndArgsTest" name="Test" time="0,000"/>
+<testcase classname="TGetParamStrAsListTest" name="TestIncludingAppName" time="0,000"/>
+<testcase classname="TGetParamStrAsListTest" name="TestNotIncludingAppName" time="0,000"/>
+</testsuite>

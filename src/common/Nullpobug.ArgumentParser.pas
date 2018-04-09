@@ -1,12 +1,20 @@
 unit Nullpobug.ArgumentParser;
 
+{$IFDEF FPC}
+{$MODE Delphi}
+{$ENDIF}
+
 interface
 
+{$IFNDEF FPC}
 {$IF CompilerVersion >= 25}
   {$LEGACYIFEND ON}
 {$IFEND}
+{$ENDIF}
+
 
 uses
+  {$IFNDEF FPC}
   {$IF CompilerVersion >= 23}
   System.Classes,
   System.Contnrs,
@@ -18,6 +26,13 @@ uses
   SysUtils,
   StrUtils;
   {$IFEND}
+  {$ELSE}
+  Classes,
+  Contnrs,
+  SysUtils,
+  StrUtils;
+  {$ENDIF}
+
 
 type
   ENoMatchArgument = class(Exception);
