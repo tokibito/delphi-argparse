@@ -2,7 +2,7 @@
 
 [![Run Tests](https://github.com/tokibito/delphi-argparse/actions/workflows/tests.yml/badge.svg)](https://github.com/tokibito/delphi-argparse/actions/workflows/tests.yml)
 
-Command line argument parser for Delphi.
+Command line argument parser for Delphi and FPC.
 
 ## Requirements
 
