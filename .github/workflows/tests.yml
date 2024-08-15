@@ -10,7 +10,7 @@ jobs:
       - name: Install FPC
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: lazarus
+          packages: lazarus lcl-utils
           version: 1.0
       - name: Checkout
         uses: actions/checkout@v4
