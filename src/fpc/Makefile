@@ -1,11 +1,13 @@
-all:
+all: lib/x86_64-linux/ArgumentParserTest
+
+lib/x86_64-linux/ArgumentParserTest:
 	lazbuild ArgumentParserTest.lpr
 
 clean:
 	rm -rf lib/
 	rm -f ArgumentParserTest.xml
 
-test: clean all
+test: all
 	lib/x86_64-linux/ArgumentParserTest
 
 .PHONY: all clean test

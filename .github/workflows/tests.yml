@@ -1,0 +1,24 @@
+name: Run tests by FPC
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install FPC
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
+          sudo apt-get install -y lazarus
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: build
+        working-directory: ./src/fpc
+        run: |
+          make all
+      - name: run tests
+        working-directory: ./src/fpc
+        run: |
+          make test
