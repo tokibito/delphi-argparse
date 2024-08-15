@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install FPC
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update
-          sudo apt-get install -y lazarus
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: lazarus
+          version: 1.0
       - name: Checkout
         uses: actions/checkout@v4
       - name: build
