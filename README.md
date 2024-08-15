@@ -1,5 +1,7 @@
 # Nullpobug.ArgumentParser
 
+![test status](https://github.com/tokibito/delphi-argparse/actions/workflows/tests.yml/badge.svg)
+
 Command line argument parser for Delphi.
 
 ## Requirements
