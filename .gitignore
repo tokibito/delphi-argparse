@@ -83,3 +83,8 @@ fp.cfg
 fp.dsk
 
 # End of https://www.gitignore.io/api/delphi,freepascal
+
+# Test Result
+ArgumentParserTest.xml
+# Build binary
+src/fpc/lib/

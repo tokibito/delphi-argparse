@@ -7,3 +7,5 @@ clean:
 
 test: clean all
 	ArgumentParserTest.exe
+
+.PHONY: all clean test

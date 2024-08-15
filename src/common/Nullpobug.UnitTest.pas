@@ -415,9 +415,8 @@ procedure TTestCase.Run(TestResultList: TObjectList);
   procedure RunTestMethods(AClass: TClass);
   type
     TMethodtableEntry = packed record
-      len: Word;
+      name: PShortString;
       adr: Pointer;
-      name: ShortString;
     end;
     TPlainMethod = procedure of object;
   var
@@ -430,18 +429,18 @@ procedure TTestCase.Run(TestResultList: TObjectList);
     VPlainMethod: TPlainMethod absolute VMethod;
   begin
     if AClass = nil then Exit;
-    pp := Pointer(Integer(AClass) + vmtMethodtable);
+    pp := Pointer(NativeInt(AClass) + vmtMethodtable);
     pMethodTable := pp^;
     if pMethodtable <> nil then begin
-      numEntries := PWord(pMethodTable)^;
-      pMethodEntry := Pointer(Integer(pMethodTable) + 2);
+      numEntries := PDWord(pMethodTable)^;
+      pMethodEntry := Pointer(NativeInt(pMethodTable) + 4);
       for I := 1 to numEntries do
       begin
-        if LowerCase(LeftStr(pMethodEntry^.Name, 4)) = 'test' then
+        if LowerCase(LeftStr(pMethodEntry^.Name^, 4)) = 'test' then
         begin
           TestResult := TTestResult.Create;
           TestResult.ResultType := rtOk;
-          TestResult.TestMethodName := pMethodEntry^.Name;
+          TestResult.TestMethodName := pMethodEntry^.Name^;
           TestResult.TestCaseName := AClass.ClassName;
           try
             try
@@ -464,7 +463,7 @@ procedure TTestCase.Run(TestResultList: TObjectList);
             FOnRanTestMethod(TestResult);
           TestResultList.Add(TestResult);
         end;
-        pMethodEntry := Pointer(Integer(pMethodEntry) + pMethodEntry^.len);
+        pMethodEntry := Pointer(NativeInt(pMethodEntry) + SizeOf(TMethodtableEntry));
       end;
     end;
     RunTestMethods(AClass.ClassParent);
