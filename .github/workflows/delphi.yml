@@ -1,28 +1,9 @@
-name: Run tests
+name: Delphi
 
 on:
   - push
 
 jobs:
-  fpc:
-    name: FPC (Linux)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install FPC
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lazarus lcl-utils
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: build
-        working-directory: ./src/fpc
-        run: |
-          make all
-      - name: run tests
-        working-directory: ./src/fpc
-        run: |
-          make test
-
   delphi:
     name: Delphi XE4 (Win32/Win64)
     runs-on: [self-hosted, Windows, X64]
