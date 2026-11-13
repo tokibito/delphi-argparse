@@ -1,12 +1,19 @@
-all: win64
+all: win32 win64
+
+win32:
+	-mkdir Win32
+	dcc32 -Q -EWin32 -N0Win32 ArgumentParserExample.dpr
 
 win64:
-	dcc64 -$M+ ArgumentParserExample.dpr
+	-mkdir Win64
+	dcc64 -Q -EWin64 -N0Win64 ArgumentParserExample.dpr
 
 clean:
-	del ArgumentParserExample.exe
+	-rmdir /s /q Win32
+	-rmdir /s /q Win64
 
 test: clean all
-	ArgumentParserExample.exe
+	Win32\ArgumentParserExample.exe --foo -b 123 abc def
+	Win64\ArgumentParserExample.exe --foo -b 123 abc def
 
-.PHONY: all win64 clean test
+.PHONY: all win32 win64 clean test

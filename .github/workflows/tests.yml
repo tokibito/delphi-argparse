@@ -24,7 +24,7 @@ jobs:
           make test
 
   delphi:
-    name: Delphi XE4 (Win64)
+    name: Delphi XE4 (Win32/Win64)
     runs-on: [self-hosted, Windows, X64]
     env:
       # Path to rsvars.bat of Delphi XE4 (BDS 11.0).
@@ -36,24 +36,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: build tests
+      - name: build and run tests (make)
         working-directory: ./src/delphi
         run: |
           call "%RSVARS%" || exit /b 1
-          dcc64 -$M+ -Q ArgumentParserTest.dpr || exit /b 1
-      - name: run tests
-        working-directory: ./src/delphi
-        run: |
-          ArgumentParserTest.exe
-      - name: build example
+          make test || exit /b 1
+      - name: build and run example (make)
         working-directory: ./src/delphi/Example
         run: |
           call "%RSVARS%" || exit /b 1
-          dcc64 -$M+ -Q ArgumentParserExample.dpr || exit /b 1
-      - name: run example
-        working-directory: ./src/delphi/Example
-        run: |
-          ArgumentParserExample.exe --foo -b 123 abc def
+          make test || exit /b 1
       - name: build projects with msbuild
         working-directory: ./src/delphi
         run: |
