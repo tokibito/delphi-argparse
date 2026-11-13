@@ -13,7 +13,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lazarus lcl-utils
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: build
         working-directory: ./src/fpc
         run: |
@@ -35,7 +35,7 @@ jobs:
         shell: cmd
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: build and run tests (make)
         working-directory: ./src/delphi
         run: |
