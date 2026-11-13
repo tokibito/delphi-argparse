@@ -90,3 +90,6 @@ ArgumentParserTest.xml
 src/fpc/lib/
 # Editor swap files
 *.swp
+# Delphi IDE / msbuild output
+src/delphi/**/Win32/
+src/delphi/**/Win64/

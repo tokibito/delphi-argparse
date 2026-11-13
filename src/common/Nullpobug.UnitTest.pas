@@ -6,33 +6,18 @@ unit Nullpobug.UnitTest;
 
 interface
 
-{$IFNDEF FPC}
-  {$IF CompilerVersion >= 25}
-    {$LEGACYIFEND ON}
-  {$IFEND}
-{$ENDIF}
-
 uses
-  {$IFNDEF FPC}
-  {$IF CompilerVersion >= 24}
-    System.Diagnostics,
-  {$IFEND}
-  {$IF CompilerVersion >= 23}
-    System.Classes,
-    System.Contnrs,
-    System.SysUtils,
-    System.StrUtils;
+  {$IFDEF FPC}
+  Classes,
+  Contnrs,
+  SysUtils,
+  StrUtils;
   {$ELSE}
-    Classes,
-    Contnrs,
-    SysUtils,
-    StrUtils;
-  {$IFEND}
-  {$ELSE}
-    Classes,
-    Contnrs,
-    SysUtils,
-    StrUtils;
+  System.Diagnostics,
+  System.Classes,
+  System.Contnrs,
+  System.SysUtils,
+  System.StrUtils;
   {$ENDIF}
 
 type
@@ -112,9 +97,7 @@ type
     FTestSuiteList: TObjectList;
     FTestResultList: TObjectList;
     {$IFNDEF FPC}
-      {$IF CompilerVersion >= 24}
-      FStopWatch: TStopWatch;
-      {$IFEND}
+    FStopWatch: TStopWatch;
     {$ENDIF}
     function GetResultCount(ResultType: TTestResultType): Integer;
     function GetFailureCount: Integer;
@@ -130,9 +113,7 @@ type
     function IsAllGreen: Boolean;
     property TestResultList: TObjectList read FTestResultList;
     {$IFNDEF FPC}
-      {$IF CompilerVersion >= 24}
-      property StopWatch: TStopWatch read FStopWatch;
-      {$IFEND}
+    property StopWatch: TStopWatch read FStopWatch;
     {$ENDIF}
     property FailureCount: Integer read GetFailureCount;
     property ErrorCount: Integer read GetErrorCount;
@@ -161,14 +142,11 @@ var
 
 implementation
 
-  {$IFNDEF FPC}
-  uses
-    {$IF CompilerVersion >= 24}
-    System.RTTI;
-    {$ELSE}
-    TypInfo;
-    {$IFEND}
-  {$ENDIF}
+{$IFNDEF FPC}
+uses
+  System.TypInfo,
+  System.Rtti;
+{$ENDIF}
 
 { TestResult }
 constructor TTestResult.Create;
@@ -303,114 +281,63 @@ end;
 
 procedure TTestCase.Run(TestResultList: TObjectList);
   {$IFNDEF FPC}
-  {$IF CompilerVersion < 24}
-  procedure RunTestMethods(AClass: TClass);
-  type
-    TMethodtableEntry = packed record
-      len: Word;
-      adr: Pointer;
-      name: ShortString;
-    end;
-    TPlainMethod = procedure of object;
-  var
-    pp: ^Pointer;
-    pMethodTable: Pointer;
-    pMethodEntry: ^TMethodTableEntry;
-    I, numEntries: Word;
-    TestResult: TTestResult;
-    VMethod: TMethod;
-    VPlainMethod: TPlainMethod absolute VMethod;
-  begin
-    if AClass = nil then Exit;
-    pp := Pointer(Integer(AClass) + vmtMethodtable);
-    pMethodTable := pp^;
-    if pMethodtable <> nil then begin
-      numEntries := PWord(pMethodTable)^;
-      pMethodEntry := Pointer(Integer(pMethodTable) + 2);
-      for I := 1 to numEntries do
-      begin
-        if LowerCase(LeftStr(pMethodEntry^.Name, 4)) = 'test' then
-        begin
-          TestResult := TTestResult.Create;
-          TestResult.ResultType := rtOk;
-          TestResult.TestMethodName := pMethodEntry^.Name;
-          TestResult.TestCaseName := AClass.ClassName;
-          try
-            try
-              SetUp;
-              VMethod.Code := pMethodEntry^.adr;
-              VMethod.Data := Self;
-              VPlainMethod;
-            except
-              on E: EAssertionError do
-                TestResult.Update(rtFail, E.ClassName, E.Message);
-              on E: ESkipTest do
-                TestResult.Update(rtSkip, E.ClassName, E.Message);
-              on E: Exception do
-                TestResult.Update(rtError, E.ClassName, E.Message);
-            end;
-          finally
-            TearDown;
-          end;
-          if Assigned(FOnRanTestMethod) then
-            FOnRanTestMethod(TestResult);
-          TestResultList.Add(TestResult);
-        end;
-        pMethodEntry := Pointer(Integer(pMethodEntry) + pMethodEntry^.len);
-      end;
-    end;
-    RunTestMethods(AClass.ClassParent);
-  end;
-  {$ELSE}
   procedure RunTestMethods(AClass: TClass);
   var
     RttiContext: TRttiContext;
     RttiType: TRttiType;
     Method: TRttiMethod;
+    RanMethodNames: TStringList;
     TestResult: TTestResult;
     StopWatch: TStopWatch;
   begin
-    StopWatch := TStopWatch.Create;
+    RanMethodNames := TStringList.Create;
     RttiContext := TRttiContext.Create;
     try
-      RttiType := RttiContext.GetType(ClassType);
+      RanMethodNames.CaseSensitive := False;
+      RttiType := RttiContext.GetType(AClass);
+      // GetMethods returns the methods of the class itself first and then
+      // those of its ancestors, so an overridden method is run only once.
       for Method in RttiType.GetMethods do
       begin
-        if LowerCase(LeftStr(Method.Name, 4)) = 'test' then
-        begin
-          TestResult := TTestResult.Create;
-          TestResult.ResultType := rtOk;
-          TestResult.TestMethodName := Method.Name;
-          TestResult.TestCaseName := ToString;
-          StopWatch.Reset;
-          StopWatch.Start;
+        if (Method.Visibility <> mvPublished) or
+           (Method.MethodKind <> mkProcedure) or
+           Method.IsClassMethod or
+           (Length(Method.GetParameters) <> 0) or
+           (LowerCase(LeftStr(Method.Name, 4)) <> 'test') or
+           (RanMethodNames.IndexOf(Method.Name) <> -1) then
+          Continue;
+        RanMethodNames.Add(Method.Name);
+        TestResult := TTestResult.Create;
+        TestResult.ResultType := rtOk;
+        TestResult.TestMethodName := Method.Name;
+        TestResult.TestCaseName := AClass.ClassName;
+        StopWatch := TStopWatch.StartNew;
+        try
           try
-            try
-              SetUp;
-              Method.Invoke(Self, []);
-            except
-              on E: EAssertionError do
-                TestResult.Update(rtFail, E.ClassName, E.Message);
-              on E: ESkipTest do
-                TestResult.Update(rtSkip, E.ClassName, E.Message);
-              on E: Exception do
-                TestResult.Update(rtError, E.ClassName, E.Message);
-            end;
-          finally
-            TearDown;
+            SetUp;
+            Method.Invoke(Self, []);
+          except
+            on E: EAssertionError do
+              TestResult.Update(rtFail, E.ClassName, E.Message);
+            on E: ESkipTest do
+              TestResult.Update(rtSkip, E.ClassName, E.Message);
+            on E: Exception do
+              TestResult.Update(rtError, E.ClassName, E.Message);
           end;
-          TestResult.Time := StopWatch.ElapsedMilliseconds;
-          if Assigned(FOnRanTestMethod) then
-            FOnRanTestMethod(TestResult);
-          TestResultList.Add(TestResult);
+        finally
+          TearDown;
         end;
+        StopWatch.Stop;
+        TestResult.Time := StopWatch.ElapsedMilliseconds;
+        if Assigned(FOnRanTestMethod) then
+          FOnRanTestMethod(TestResult);
+        TestResultList.Add(TestResult);
       end;
     finally
       RttiContext.Free;
-      FreeAndNil(StopWatch);
+      RanMethodNames.Free;
     end;
   end;
-  {$IFEND}
   {$ELSE}
   procedure RunTestMethods(AClass: TClass);
   type
@@ -517,20 +444,12 @@ begin
   FTestSuiteList := TObjectList.Create;
   FTestResultList := TObjectList.Create;
   {$IFNDEF FPC}
-    {$IF CompilerVersion >= 24}
-    FStopWatch := TStopWatch.Create;
-    FStopWatch.Start;
-    {$IFEND}
+  FStopWatch := TStopWatch.StartNew;
   {$ENDIF}
 end;
 
 destructor TTestRunner.Destroy;
 begin
-  {$IFNDEF FPC}
-    {$IF CompilerVersion >= 24}
-    FreeAndNil(FStopWatch);
-    {$IFEND}
-  {$ENDIF}
   FreeAndNil(FTestSuiteList);
   FreeAndNil(FTestResultList);
   inherited Destroy;
@@ -717,13 +636,9 @@ var
   TestResult: TTestResult;
 begin
   {$IFNDEF FPC}
-    {$IF CompilerVersion >= 24}
-    Seconds := StopWatch.ElapsedMilliseconds / 1000;
-    {$ELSE}
-    Seconds := 0.0;
-    {$IFEND}
-    {$ELSE}
-    Seconds := 0.0;
+  Seconds := FStopWatch.ElapsedMilliseconds / 1000;
+  {$ELSE}
+  Seconds := 0.0;
   {$ENDIF}
   Writeln('');
   (* Display Error details *)

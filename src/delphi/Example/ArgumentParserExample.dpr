@@ -2,16 +2,8 @@ program ArgumentParserExample;
 
 {$APPTYPE CONSOLE}
 
-{$IF CompilerVersion >= 25}
-  {$LEGACYIFEND ON}
-{$IFEND}
-
 uses
-  {$IF CompilerVersion >= 23}
   System.SysUtils,
-  {$ELSE}
-  SysUtils,
-  {$IFEND}
   Nullpobug.ArgumentParser in '..\..\common\Nullpobug.ArgumentParser.pas';
 
 var
