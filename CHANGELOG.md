@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2 - 2026-11-14
+
+Requires Delphi XE4 or later; projects on Delphi 2007 to XE3 should stay on
+0.1. The parser API is unchanged, so upgrading is a matter of replacing the
+unit.
 
 ### Added
 
