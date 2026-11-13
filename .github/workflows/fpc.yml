@@ -1,0 +1,24 @@
+name: FPC
+
+on:
+  - push
+
+jobs:
+  fpc:
+    name: FPC (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install FPC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lazarus lcl-utils
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: build
+        working-directory: ./src/fpc
+        run: |
+          make all
+      - name: run tests
+        working-directory: ./src/fpc
+        run: |
+          make test
