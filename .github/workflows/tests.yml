@@ -1,10 +1,11 @@
-name: Run tests by FPC
+name: Run tests
 
 on:
   - push
 
 jobs:
-  build:
+  fpc:
+    name: FPC (Linux)
     runs-on: ubuntu-latest
     steps:
       - name: Install FPC
@@ -21,3 +22,35 @@ jobs:
         working-directory: ./src/fpc
         run: |
           make test
+
+  delphi:
+    name: Delphi XE4 (Win64)
+    runs-on: [self-hosted, Windows, X64]
+    env:
+      # Path to rsvars.bat of Delphi XE4 (BDS 11.0).
+      # Can be overridden with the repository variable DELPHI_RSVARS.
+      RSVARS: ${{ vars.DELPHI_RSVARS || 'C:\Program Files (x86)\Embarcadero\RAD Studio\11.0\bin\rsvars.bat' }}
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: build tests
+        working-directory: ./src/delphi
+        run: |
+          call "%RSVARS%" || exit /b 1
+          dcc64 -$M+ -Q ArgumentParserTest.dpr || exit /b 1
+      - name: run tests
+        working-directory: ./src/delphi
+        run: |
+          ArgumentParserTest.exe
+      - name: build example
+        working-directory: ./src/delphi/Example
+        run: |
+          call "%RSVARS%" || exit /b 1
+          dcc64 -$M+ -Q ArgumentParserExample.dpr || exit /b 1
+      - name: run example
+        working-directory: ./src/delphi/Example
+        run: |
+          ArgumentParserExample.exe --foo -b 123 abc def

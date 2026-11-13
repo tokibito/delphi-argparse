@@ -6,24 +6,13 @@ unit Nullpobug.ArgumentParserTest;
 
 interface
 
-{$IFNDEF FPC}
-  {$IF CompilerVersion >= 25}
-    {$LEGACYIFEND ON}
-  {$IFEND}
-{$ENDIF}
-
 uses
-  {$IFNDEF FPC}
-    {$IF CompilerVersion >= 23}
-    System.Classes,
-    System.SysUtils,
-    {$ELSE}
-    Classes,
-    SysUtils,
-    {$IFEND}
-  {$ELSE}
+  {$IFDEF FPC}
   Classes,
   SysUtils,
+  {$ELSE}
+  System.Classes,
+  System.SysUtils,
   {$ENDIF}
   Nullpobug.UnitTest,
   Nullpobug.ArgumentParser;

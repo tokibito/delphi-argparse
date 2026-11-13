@@ -1,5 +1,5 @@
 all:
-	dcc32 -$M+ ArgumentParserTest.dpr
+	dcc64 -$M+ ArgumentParserTest.dpr
 
 clean:
 	del ArgumentParserTest.exe

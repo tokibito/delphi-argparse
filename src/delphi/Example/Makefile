@@ -1,14 +1,12 @@
-all: win32 osx
+all: win64
 
-win32:
-	dcc32 -$M+ ArgumentParserExample.dpr
-
-osx:
-	dccosx -$M+ ArgumentParserExample.dpr
+win64:
+	dcc64 -$M+ ArgumentParserExample.dpr
 
 clean:
 	del ArgumentParserExample.exe
-	del ArgumentParserExample
 
 test: clean all
 	ArgumentParserExample.exe
+
+.PHONY: all win64 clean test

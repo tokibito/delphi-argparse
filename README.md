@@ -6,7 +6,7 @@ Command line argument parser for Delphi and FPC.
 
 ## Requirements
 
-* Delphi 2007 or FPC
+* Delphi XE4 or later (Win64, dcc64) or FPC
 
 ## License
 
@@ -36,7 +36,7 @@ Example codes are in "Example" directory.
 
 ```
 >cd delphi-argparse\Example
->make win32
+>make win64
 >ArgumentParserExample.exe --foo -b 123 abc def
 foo: True
 bar: 123
