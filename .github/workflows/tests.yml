@@ -54,3 +54,16 @@ jobs:
         working-directory: ./src/delphi/Example
         run: |
           ArgumentParserExample.exe --foo -b 123 abc def
+      - name: build projects with msbuild
+        working-directory: ./src/delphi
+        run: |
+          call "%RSVARS%" || exit /b 1
+          for %%P in (Win32 Win64) do (
+            msbuild ArgumentParserTest.dproj /t:Build /p:Config=Release /p:Platform=%%P /v:minimal || exit /b 1
+            msbuild Example\ArgumentParserExample.dproj /t:Build /p:Config=Release /p:Platform=%%P /v:minimal || exit /b 1
+          )
+      - name: run tests (msbuild output)
+        working-directory: ./src/delphi
+        run: |
+          Win32\Release\ArgumentParserTest.exe || exit /b 1
+          Win64\Release\ArgumentParserTest.exe || exit /b 1
