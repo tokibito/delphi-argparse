@@ -88,3 +88,5 @@ fp.dsk
 ArgumentParserTest.xml
 # Build binary
 src/fpc/lib/
+# Editor swap files
+*.swp
