@@ -155,6 +155,21 @@ type
     procedure Test;
   end;
 
+  TArgumentParserParseArgsErrorTest = class(TTestCase)
+  private
+    FArgumentParser: TArgumentParser;
+    FTargetArgs: TStringList;
+    procedure AssertParseError(ExceptionClass: TExceptionClass;
+        const ExpectedMessage: String);
+  public
+    procedure SetUp; override;
+    procedure TearDown; override;
+  published
+    procedure TestInvalidArgument;
+    procedure TestInvalidArgumentWithValue;
+    procedure TestParameterMissing;
+  end;
+
   TGetParamStrAsListTest = class(TTestCase)
   published
     procedure TestIncludingAppName;
@@ -191,7 +206,7 @@ end;
 (* TArgumentTest *)
 procedure TArgumentTest.SetUp;
 begin
-  FArgument := TArgument.Create('--foo', 'foo', saBool);
+  FArgument := TArgument.Create('--foo', 'foo', TStoreAction.saBool);
 end;
 
 procedure TArgumentTest.TearDown;
@@ -203,7 +218,7 @@ procedure TArgumentTest.TestProperty;
 begin
   AssertEquals(FArgument.Option, '--foo');
   AssertEquals(FArgument.Dest, 'foo');
-  AssertTrue(FArgument.StoreAction = saBool);
+  AssertTrue(FArgument.StoreAction = TStoreAction.saBool);
 end;
 (* End of TArgumentTest *)
 
@@ -220,7 +235,7 @@ end;
 
 procedure TArgumentParserAddArgumentTest.TestTArgument;
 begin
-  FArgumentParser.AddArgument(TArgument.Create('--foo', 'bar', saStore));
+  FArgumentParser.AddArgument(TArgument.Create('--foo', 'bar', TStoreAction.saStore));
   AssertEquals(FArgumentParser.ArgumentsCount, 1);
   AssertEquals(FArgumentParser.Arguments[0].Option, '--foo');
   AssertEquals(FArgumentParser.Arguments[0].Dest, 'bar');
@@ -228,7 +243,7 @@ end;
 
 procedure TArgumentParserAddArgumentTest.TestStringParameter;
 begin
-  FArgumentParser.AddArgument('--foo', 'bar', saStore);
+  FArgumentParser.AddArgument('--foo', 'bar', TStoreAction.saStore);
   AssertEquals(FArgumentParser.ArgumentsCount, 1);
   AssertEquals(FArgumentParser.Arguments[0].Option, '--foo');
   AssertEquals(FArgumentParser.Arguments[0].Dest, 'bar');
@@ -236,8 +251,8 @@ end;
 
 procedure TArgumentParserAddArgumentTest.TestOmitDestName;
 begin
-  FArgumentParser.AddArgument('--foo', saStore);
-  FArgumentParser.AddArgument('-b', saStore);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saStore);
+  FArgumentParser.AddArgument('-b', TStoreAction.saStore);
   AssertEquals(FArgumentParser.ArgumentsCount, 2);
   AssertEquals(FArgumentParser.Arguments[0].Option, '--foo');
   AssertEquals(FArgumentParser.Arguments[0].Dest, 'foo');
@@ -250,8 +265,8 @@ end;
 procedure TArgumentParserHasArgumentTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', saBool);
-  FArgumentParser.AddArgument('--bar', saStore);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saStore);
 end;
 
 procedure TArgumentParserHasArgumentTest.TearDown;
@@ -261,16 +276,16 @@ end;
 
 procedure TArgumentParserHasArgumentTest.TestHasBoolArgument;
 begin
-  AssertTrue(FArgumentParser.HasArgument('--foo', saBool));
-  AssertFalse(FArgumentParser.HasArgument('--bar', saBool));
-  AssertFalse(FArgumentParser.HasArgument('--invalid', saBool));
+  AssertTrue(FArgumentParser.HasArgument('--foo', TStoreAction.saBool));
+  AssertFalse(FArgumentParser.HasArgument('--bar', TStoreAction.saBool));
+  AssertFalse(FArgumentParser.HasArgument('--invalid', TStoreAction.saBool));
 end;
 
 procedure TArgumentParserHasArgumentTest.TestHasStoreArgument;
 begin
-  AssertTrue(FArgumentParser.HasArgument('--bar', saStore));
-  AssertFalse(FArgumentParser.HasArgument('--foo', saStore));
-  AssertFalse(FArgumentParser.HasArgument('--invalid', saStore));
+  AssertTrue(FArgumentParser.HasArgument('--bar', TStoreAction.saStore));
+  AssertFalse(FArgumentParser.HasArgument('--foo', TStoreAction.saStore));
+  AssertFalse(FArgumentParser.HasArgument('--invalid', TStoreAction.saStore));
 end;
 (* End of TArgumentParserHasArgumentTest *)
 
@@ -278,8 +293,8 @@ end;
 procedure TArgumentParserGetArgumentTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', saBool);
-  FArgumentParser.AddArgument('--bar', saStore);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saStore);
 end;
 
 procedure TArgumentParserGetArgumentTest.TearDown;
@@ -302,9 +317,9 @@ end;
 procedure TArgumentParserParseArgsOnlySwitchTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', saBool);
-  FArgumentParser.AddArgument('--bar', saBool);
-  FArgumentParser.AddArgument('-b', saBool);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saBool);
+  FArgumentParser.AddArgument('-b', TStoreAction.saBool);
   FParseResult := nil;
   FTargetArgs := TStringList.Create;
   FTargetArgs.Add('--foo');
@@ -341,10 +356,10 @@ end;
 procedure TArgumentParserParseArgsStoreValueTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', saStore);
-  FArgumentParser.AddArgument('--bar', saStore);
-  FArgumentParser.AddArgument('-b', saStore);
-  FArgumentParser.AddArgument('--hoge', saStore);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saStore);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saStore);
+  FArgumentParser.AddArgument('-b', TStoreAction.saStore);
+  FArgumentParser.AddArgument('--hoge', TStoreAction.saStore);
   FParseResult := nil;
   FTargetArgs := TStringList.Create;
   FTargetArgs.Add('--foo');
@@ -399,8 +414,8 @@ end;
 procedure TArgumentParserParseArgsUnnamedArgsTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', saBool);
-  FArgumentParser.AddArgument('--bar', saStore);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saStore);
   FParseResult := nil;
   FTargetArgs := TStringList.Create;
   FTargetArgs.Add('value1');
@@ -449,10 +464,10 @@ end;
 procedure TArgumentParserParseArgsSameDestinationTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', 'foo', saBool);
-  FArgumentParser.AddArgument('-f', 'foo', saBool);
-  FArgumentParser.AddArgument('--bar', 'bar', saStore);
-  FArgumentParser.AddArgument('-b', 'bar', saStore);
+  FArgumentParser.AddArgument('--foo', 'foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('-f', 'foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', 'bar', TStoreAction.saStore);
+  FArgumentParser.AddArgument('-b', 'bar', TStoreAction.saStore);
   FParseResult := nil;
   FTargetArgs := TStringList.Create;
 end;
@@ -506,8 +521,8 @@ end;
 procedure TArgumentParserParseArgsSwitchAndArgsTest.SetUp;
 begin
   FArgumentParser := TArgumentParser.Create;
-  FArgumentParser.AddArgument('--foo', saBool);
-  FArgumentParser.AddArgument('--bar', saStore);
+  FArgumentParser.AddArgument('--foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saStore);
   FParseResult := nil;
   FTargetArgs := TStringList.Create;
   FTargetArgs.Add('--foo');
@@ -534,6 +549,102 @@ begin
   AssertEquals(FParseResult.Args[1], 'value2');
 end;
 (* End of TArgumentParserParseArgsSwitchAndArgsTest *)
+
+(* TArgumentParserParseArgsErrorTest *)
+
+// Bytes currently allocated from the memory manager. Used to check that
+// ParseArgs frees the partly built TParseResult when it raises.
+{$IFDEF FPC}
+function AllocatedBytes: Int64;
+begin
+  Result := GetFPCHeapStatus.CurrHeapUsed;
+end;
+{$ELSE}
+function AllocatedBytes: Int64;
+var
+  State: TMemoryManagerState;
+  I: Integer;
+begin
+  GetMemoryManagerState(State);
+  Result := State.TotalAllocatedMediumBlockSize + State.TotalAllocatedLargeBlockSize;
+  for I := Low(State.SmallBlockTypeStates) to High(State.SmallBlockTypeStates) do
+    Result := Result + Int64(State.SmallBlockTypeStates[I].AllocatedBlockCount) *
+        State.SmallBlockTypeStates[I].UseableBlockSize;
+end;
+{$ENDIF}
+
+procedure TArgumentParserParseArgsErrorTest.SetUp;
+begin
+  FArgumentParser := TArgumentParser.Create;
+  FArgumentParser.AddArgument('--foo', TStoreAction.saBool);
+  FArgumentParser.AddArgument('--bar', TStoreAction.saStore);
+  FTargetArgs := TStringList.Create;
+  // Stored before the error, so the partly built result holds some data.
+  FTargetArgs.Add('--foo');
+  FTargetArgs.Add('--bar=bar_value');
+  FTargetArgs.Add('value1');
+end;
+
+procedure TArgumentParserParseArgsErrorTest.TearDown;
+begin
+  FArgumentParser.Free;
+  FTargetArgs.Free;
+end;
+
+procedure TArgumentParserParseArgsErrorTest.AssertParseError(
+    ExceptionClass: TExceptionClass; const ExpectedMessage: String);
+const
+  Iterations = 100;
+var
+  I: Integer;
+  Before: Int64;
+  RaisedClassName, RaisedMessage: String;
+
+  procedure ParseOnce;
+  begin
+    RaisedClassName := '';
+    RaisedMessage := '';
+    try
+      FArgumentParser.ParseArgs(FTargetArgs).Free;
+    except
+      on E: Exception do
+      begin
+        RaisedClassName := E.ClassName;
+        RaisedMessage := E.Message;
+      end;
+    end;
+  end;
+
+begin
+  // The first call may allocate memory that stays (for example in the RTL),
+  // so it is not measured.
+  ParseOnce;
+  AssertEquals(RaisedClassName, ExceptionClass.ClassName);
+  AssertEquals(RaisedMessage, ExpectedMessage);
+  Before := AllocatedBytes;
+  for I := 1 to Iterations do
+    ParseOnce;
+  AssertEquals(AllocatedBytes - Before, Int64(0));
+end;
+
+procedure TArgumentParserParseArgsErrorTest.TestInvalidArgument;
+begin
+  FTargetArgs.Add('--invalid');
+  AssertParseError(EInvalidArgument, 'Invalid argument "--invalid"');
+end;
+
+procedure TArgumentParserParseArgsErrorTest.TestInvalidArgumentWithValue;
+begin
+  FTargetArgs.Add('--invalid=value');
+  AssertParseError(EInvalidArgument, 'Invalid argument "--invalid"');
+end;
+
+procedure TArgumentParserParseArgsErrorTest.TestParameterMissing;
+begin
+  FTargetArgs.Add('--bar');
+  AssertParseError(EParameterMissing, 'Missing value for "--bar"');
+end;
+(* End of TArgumentParserParseArgsErrorTest *)
 
 (* TGetParamStrAsListTest *)
 procedure TGetParamStrAsListTest.TestIncludingAppName;
@@ -567,6 +678,7 @@ initialization
   RegisterTest(TArgumentParserParseArgsNoParameterTest);
   RegisterTest(TArgumentParserParseArgsSameDestinationTest);
   RegisterTest(TArgumentParserParseArgsSwitchAndArgsTest);
+  RegisterTest(TArgumentParserParseArgsErrorTest);
   RegisterTest(TGetParamStrAsListTest);
 
 end.

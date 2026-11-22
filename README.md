@@ -44,9 +44,9 @@ var
 begin
   Parser := TArgumentParser.Create;
   try
-    Parser.AddArgument('--verbose', saBool);             // flag, dest = 'verbose'
-    Parser.AddArgument('--output', 'output', saStore);   // --output FILE / --output=FILE
-    Parser.AddArgument('-o', 'output', saStore);         // short alias of --output
+    Parser.AddArgument('--verbose', TStoreAction.saBool);            // flag, dest = 'verbose'
+    Parser.AddArgument('--output', 'output', TStoreAction.saStore);  // --output FILE / --output=FILE
+    Parser.AddArgument('-o', 'output', TStoreAction.saStore);        // short alias of --output
 
     ParseResult := Parser.ParseArgs;  // parses ParamStr(1)..ParamStr(ParamCount)
     try
@@ -73,21 +73,28 @@ arguments (without the program name) as a new `TStringList`.
 
 | Call | Meaning |
 | --- | --- |
-| `AddArgument('--foo', saBool)` | Flag. The destination name is derived from the option by stripping leading `--` or `-` (here `foo`). |
-| `AddArgument('--bar', saStore)` | Option that takes a value. Destination is `bar`. |
-| `AddArgument('-b', 'bar', saStore)` | Option with an explicit destination name. Use this to define aliases. |
+| `AddArgument('--foo', TStoreAction.saBool)` | Flag. The destination name is derived from the option by stripping leading `--` or `-` (here `foo`). |
+| `AddArgument('--bar', TStoreAction.saStore)` | Option that takes a value. Destination is `bar`. |
+| `AddArgument('-b', 'bar', TStoreAction.saStore)` | Option with an explicit destination name. Use this to define aliases. |
 | `AddArgument(Argument: TArgument)` | Register a `TArgument` instance. The parser takes ownership of it. |
 
-The store action defaults to `saBool` when omitted.
+The store action defaults to `TStoreAction.saBool` when omitted.
+
+The examples qualify the values of `TStoreAction` with the type name
+(`TStoreAction.saBool`, `TStoreAction.saStore`). This compiles on Delphi XE4
+or later and on FPC 3.2 or later in Delphi mode without `{$SCOPEDENUMS ON}`,
+and the library itself is written this way. The unqualified form (`saBool`,
+`saStore`) still compiles on both, so existing code does not need to change.
 
 ### Reading the result
 
 `ParseArgs` returns a new `TParseResult`. The caller owns it and must free it.
+If `ParseArgs` raises one of the exceptions below, there is no result to free.
 
 | Member | Description |
 | --- | --- |
 | `HasArgument(Dest)` | `True` if the flag was given or the option has a value. |
-| `GetValue(Dest)` | Value of a `saStore` option. Raises `ENoSuchArgument` if it was not given. |
+| `GetValue(Dest)` | Value of a `TStoreAction.saStore` option. Raises `ENoSuchArgument` if it was not given. |
 | `Args` | `TStringList` of positional arguments, in order. |
 
 If the same option is given more than once, the first value is kept.
@@ -96,8 +103,8 @@ If the same option is given more than once, the first value is kept.
 
 | Exception | Raised when |
 | --- | --- |
-| `EInvalidArgument` | An argument starting with `-` does not match any defined option (or `--flag=value` is used for a `saBool` flag). |
-| `EParameterMissing` | A `saStore` option is the last argument and has no value. |
+| `EInvalidArgument` | An argument starting with `-` does not match any defined option (or `--flag=value` is used for a `TStoreAction.saBool` flag). |
+| `EParameterMissing` | A `TStoreAction.saStore` option is the last argument and has no value. |
 | `ENoSuchArgument` | `TParseResult.GetValue` is called for a destination that was not given. |
 
 ## Example

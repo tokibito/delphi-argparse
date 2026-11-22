@@ -80,11 +80,11 @@ type
     function ParseArgs(const TargetArgs: TStringList): TParseResult; overload;
     procedure AddArgument(const Argument: TArgument); overload;
     procedure AddArgument(const Option, Dest: String;
-        StoreAction: TStoreAction = saBool); overload;
+        StoreAction: TStoreAction = TStoreAction.saBool); overload;
     procedure AddArgument(const Option: String;
-        StoreAction: TStoreAction = saBool); overload;
+        StoreAction: TStoreAction = TStoreAction.saBool); overload;
     function HasArgument(const Option: String;
-        StoreAction: TStoreAction = saBool): Boolean;
+        StoreAction: TStoreAction = TStoreAction.saBool): Boolean;
     function GetArgument(const Option: String): TArgument; overload;
     function GetArgument(Index: Integer): TArgument; overload;
     property Description: String read FDescription write FDescription;
@@ -212,53 +212,58 @@ var
   Argument: TArgument;
 begin
   Result := TParseResult.Create;
-  CurrentIndex := 0;
-  while CurrentIndex < TargetArgs.Count do
-  begin
-    CurrentParam := TargetArgs[CurrentIndex];
-    if LeftStr(CurrentParam, 1) = '-' then
+  try
+    CurrentIndex := 0;
+    while CurrentIndex < TargetArgs.Count do
     begin
-      SeparatorPosition := Pos('=', CurrentParam);
-      if SeparatorPosition <> 0 then
+      CurrentParam := TargetArgs[CurrentIndex];
+      if LeftStr(CurrentParam, 1) = '-' then
       begin
-        Key := LeftStr(CurrentParam, SeparatorPosition - 1);
-        Value := RightStr(CurrentParam, Length(CurrentParam) - SeparatorPosition);
-        if HasArgument(Key, saStore) then
+        SeparatorPosition := Pos('=', CurrentParam);
+        if SeparatorPosition <> 0 then
         begin
-          Argument := GetArgument(Key);
-          Result.StoreValue(Argument.Dest, Value);
-        end
-        else
-          raise EInvalidArgument.CreateFmt('Invalid argument "%s"', [Key]);
-      end
-      else
-      begin
-        Key := CurrentParam;
-        if HasArgument(Key, saBool) then
-        begin
-          Argument := GetArgument(Key);
-          Result.StoreBool(Argument.Dest);
-        end
-        else
-          if HasArgument(Key, saStore) then
+          Key := LeftStr(CurrentParam, SeparatorPosition - 1);
+          Value := RightStr(CurrentParam, Length(CurrentParam) - SeparatorPosition);
+          if HasArgument(Key, TStoreAction.saStore) then
           begin
-            Inc(CurrentIndex);
-            if CurrentIndex >= TargetArgs.Count then
-              raise EParameterMissing.CreateFmt('Missing value for "%s"', [Key]);
-            Value := TargetArgs[CurrentIndex];
             Argument := GetArgument(Key);
             Result.StoreValue(Argument.Dest, Value);
           end
           else
             raise EInvalidArgument.CreateFmt('Invalid argument "%s"', [Key]);
+        end
+        else
+        begin
+          Key := CurrentParam;
+          if HasArgument(Key, TStoreAction.saBool) then
+          begin
+            Argument := GetArgument(Key);
+            Result.StoreBool(Argument.Dest);
+          end
+          else
+            if HasArgument(Key, TStoreAction.saStore) then
+            begin
+              Inc(CurrentIndex);
+              if CurrentIndex >= TargetArgs.Count then
+                raise EParameterMissing.CreateFmt('Missing value for "%s"', [Key]);
+              Value := TargetArgs[CurrentIndex];
+              Argument := GetArgument(Key);
+              Result.StoreValue(Argument.Dest, Value);
+            end
+            else
+              raise EInvalidArgument.CreateFmt('Invalid argument "%s"', [Key]);
+        end;
+      end
+      else
+      begin
+        Value := TargetArgs[CurrentIndex];
+        Result.Args.Add(Value);
       end;
-    end
-    else
-    begin
-      Value := TargetArgs[CurrentIndex];
-      Result.Args.Add(Value);
+      Inc(CurrentIndex);
     end;
-    Inc(CurrentIndex);
+  except
+    Result.Free;
+    raise;
   end;
 end;
 
@@ -268,7 +273,7 @@ begin
 end;
 
 procedure TArgumentParser.AddArgument(const Option, Dest: String;
-    StoreAction: TStoreAction = saBool);
+    StoreAction: TStoreAction = TStoreAction.saBool);
 var
   Argument: TArgument;
 begin
@@ -277,7 +282,7 @@ begin
 end;
 
 procedure TArgumentParser.AddArgument(const Option: String;
-    StoreAction: TStoreAction = saBool);
+    StoreAction: TStoreAction = TStoreAction.saBool);
 var
   Dest: String;
 begin
@@ -291,7 +296,7 @@ begin
 end;
 
 function TArgumentParser.HasArgument(const Option: String;
-    StoreAction: TStoreAction = saBool): Boolean;
+    StoreAction: TStoreAction = TStoreAction.saBool): Boolean;
 var
   I: Integer;
   Argument: TArgument;
