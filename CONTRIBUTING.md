@@ -46,7 +46,8 @@ $ make test
 ```
 
 The test runner prints a summary, with the details of every failure and error,
-and writes the results to `ArgumentParserTest.xml` in JUnit format. A failing test makes the process exit with a
+and writes the results to `ArgumentParserTest.xml` in JUnit format, encoded in
+UTF-8 (with a byte order mark on Delphi, without one on FPC). A failing test makes the process exit with a
 non-zero code.
 
 ### In CI
@@ -54,7 +55,9 @@ non-zero code.
 GitHub Actions runs both on every push: `fpc.yml` on `ubuntu-latest`, and
 `delphi.yml` with Delphi XE4 on a self-hosted Windows runner. The Delphi job
 also builds both `.dproj` files with `msbuild` for Win32 and Win64, so a
-change to a `.dpr` that is not reflected in its `.dproj` fails there.
+change to a `.dpr` that is not reflected in its `.dproj` fails there. Each
+job uploads its `ArgumentParserTest.xml` as an artifact (`test-results-fpc`,
+`test-results-delphi`).
 
 If you have only one of the two compilers, say which one you tested with in the
 pull request, and CI covers the other.

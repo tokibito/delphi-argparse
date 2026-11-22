@@ -14,10 +14,10 @@ begin
   Parser := TArgumentParser.Create;
   try
     try
-      Parser.AddArgument('--help', saBool);
-      Parser.AddArgument('--foo', saBool);
-      Parser.AddArgument('--bar', 'bar', saStore);
-      Parser.AddArgument('-b', 'bar', saStore);
+      Parser.AddArgument('--help', TStoreAction.saBool);
+      Parser.AddArgument('--foo', TStoreAction.saBool);
+      Parser.AddArgument('--bar', 'bar', TStoreAction.saStore);
+      Parser.AddArgument('-b', 'bar', TStoreAction.saStore);
       ParseResult := Parser.ParseArgs;
       try
         // help

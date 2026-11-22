@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.3 - Unreleased
+
+The parser API and behavior are unchanged, apart from the leak fix below.
+
+### Changed
+
+- **Enumeration values are qualified with their type name** throughout the
+  sources and the README: `TStoreAction.saBool`, `TStoreAction.saStore`,
+  `TTestResultType.rtOK` and so on, including `case` labels, default
+  parameter values and sets. This compiles on Delphi XE4 or later and on
+  FPC 3.2 or later in Delphi mode without `{$SCOPEDENUMS ON}`. Code that uses
+  the unqualified names (`saBool`, `saStore`) still compiles.
+- `TTestRunner.SaveToXML` builds the report in a `TStringList` and saves it
+  with `SaveToFile(FileName, TEncoding.UTF8)` instead of writing to a `Text`
+  file. The file is now encoded in UTF-8, as its XML declaration says; Delphi
+  writes a byte order mark and FPC does not. The elements, attributes and
+  number format are unchanged.
+
+### Removed
+
+- The `ShortString` and `RawByteString` overloads of
+  `TTestCase.AssertEquals`. On Delphi XE4 or later and FPC in Delphi mode,
+  the `String` overload covers them.
+
+### Fixed
+
+- `TArgumentParser.ParseArgs(TargetArgs)` leaked the partly built
+  `TParseResult` when it raised `EInvalidArgument` or `EParameterMissing`.
+  The exceptions and their messages are unchanged. Tests now cover these
+  error paths.
+- `TTextTestRunner.WriteTestResultDetail` no longer reads `ResultTypeString`
+  before assigning it when called for a result that is neither a failure nor
+  an error.
+
 ## 0.2 - 2026-11-14
 
 Requires Delphi XE4 or later; projects on Delphi 2007 to XE3 should stay on

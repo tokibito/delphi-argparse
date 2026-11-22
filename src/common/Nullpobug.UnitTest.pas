@@ -65,11 +65,7 @@ type
     procedure AssertEquals(Value1, Value2: Cardinal); overload; virtual;
     procedure AssertEquals(Value1, Value2: Int64); overload; virtual;
     procedure AssertEquals(Value1, Value2: UInt64); overload; virtual;
-    procedure AssertEquals(Value1, Value2: ShortString); overload; virtual;
     procedure AssertEquals(Value1, Value2: String); overload; virtual;
-    {$IFDEF UNICODE}
-    procedure AssertEquals(Value1, Value2: RawByteString); overload; virtual;
-    {$ENDIF}
     procedure AssertIsNil(Value: TObject); virtual;
     procedure AssertIsNotNil(Value: TObject); virtual;
     procedure AssertRaises(ExceptionClass: TExceptionClass; Proc: TTestProc); overload; virtual;
@@ -122,7 +118,7 @@ type
 
   TTextTestRunner = class(TTestRunner)
   private
-    function GetReusltMessage: String;
+    function GetResultMessage: String;
   public
     procedure WriteHeader;
     procedure WriteTestResult(TestResult: TTestResult);
@@ -151,7 +147,7 @@ uses
 { TestResult }
 constructor TTestResult.Create;
 begin
-  FResultType := rtSkip;
+  FResultType := TTestResultType.rtSkip;
   FTime := 0;
 end;
 
@@ -227,25 +223,11 @@ begin
     raise EAssertionError.CreateFmt('%d != %d', [Value1, Value2]);
 end;
 
-procedure TTestCase.AssertEquals(Value1, Value2: ShortString);
-begin
-  if not (Value1 = Value2) then
-    raise EAssertionError.CreateFmt('%s != %s', [Value1, Value2]);
-end;
-
 procedure TTestCase.AssertEquals(Value1, Value2: String);
 begin
   if not (Value1 = Value2) then
     raise EAssertionError.CreateFmt('%s != %s', [Value1, Value2]);
 end;
-
-{$IFDEF UNICODE}
-procedure TTestCase.AssertEquals(Value1, Value2: RawByteString);
-begin
-  if not (Value1 = Value2) then
-    raise EAssertionError.CreateFmt('%s != %s', [Value1, Value2]);
-end;
-{$ENDIF}
 
 procedure TTestCase.AssertIsNil(Value: TObject);
 begin
@@ -299,8 +281,8 @@ procedure TTestCase.Run(TestResultList: TObjectList);
       // those of its ancestors, so an overridden method is run only once.
       for Method in RttiType.GetMethods do
       begin
-        if (Method.Visibility <> mvPublished) or
-           (Method.MethodKind <> mkProcedure) or
+        if (Method.Visibility <> TMemberVisibility.mvPublished) or
+           (Method.MethodKind <> TMethodKind.mkProcedure) or
            Method.IsClassMethod or
            (Length(Method.GetParameters) <> 0) or
            (LowerCase(LeftStr(Method.Name, 4)) <> 'test') or
@@ -308,7 +290,7 @@ procedure TTestCase.Run(TestResultList: TObjectList);
           Continue;
         RanMethodNames.Add(Method.Name);
         TestResult := TTestResult.Create;
-        TestResult.ResultType := rtOk;
+        TestResult.ResultType := TTestResultType.rtOK;
         TestResult.TestMethodName := Method.Name;
         TestResult.TestCaseName := AClass.ClassName;
         StopWatch := TStopWatch.StartNew;
@@ -318,11 +300,11 @@ procedure TTestCase.Run(TestResultList: TObjectList);
             Method.Invoke(Self, []);
           except
             on E: EAssertionError do
-              TestResult.Update(rtFail, E.ClassName, E.Message);
+              TestResult.Update(TTestResultType.rtFail, E.ClassName, E.Message);
             on E: ESkipTest do
-              TestResult.Update(rtSkip, E.ClassName, E.Message);
+              TestResult.Update(TTestResultType.rtSkip, E.ClassName, E.Message);
             on E: Exception do
-              TestResult.Update(rtError, E.ClassName, E.Message);
+              TestResult.Update(TTestResultType.rtError, E.ClassName, E.Message);
           end;
         finally
           TearDown;
@@ -366,7 +348,7 @@ procedure TTestCase.Run(TestResultList: TObjectList);
         if LowerCase(LeftStr(pMethodEntry^.Name^, 4)) = 'test' then
         begin
           TestResult := TTestResult.Create;
-          TestResult.ResultType := rtOk;
+          TestResult.ResultType := TTestResultType.rtOK;
           TestResult.TestMethodName := pMethodEntry^.Name^;
           TestResult.TestCaseName := AClass.ClassName;
           try
@@ -377,11 +359,11 @@ procedure TTestCase.Run(TestResultList: TObjectList);
               VPlainMethod;
             except
               on E: EAssertionError do
-                TestResult.Update(rtFail, E.ClassName, E.Message);
+                TestResult.Update(TTestResultType.rtFail, E.ClassName, E.Message);
               on E: ESkipTest do
-                TestResult.Update(rtSkip, E.ClassName, E.Message);
+                TestResult.Update(TTestResultType.rtSkip, E.ClassName, E.Message);
               on E: Exception do
-                TestResult.Update(rtError, E.ClassName, E.Message);
+                TestResult.Update(TTestResultType.rtError, E.ClassName, E.Message);
             end;
           finally
             TearDown;
@@ -481,14 +463,13 @@ procedure TTestRunner.SaveToXML(FileName: String);
 var
   I: Integer;
   Seconds: Single;
-  OutputFile: Text;
+  Lines: TStringList;
   TestResult: TTestResult;
 begin
-  AssignFile(OutputFile, FileName);
-  Rewrite(OutputFile);
+  Lines := TStringList.Create;
   try
-    Writeln(OutputFile, '<?xml version="1.0" encoding="UTF-8"?>');
-    Writeln(OutputFile,
+    Lines.Add('<?xml version="1.0" encoding="UTF-8"?>');
+    Lines.Add(
         Format('<testsuite name="%s" tests="%d" errors="%d" failures="%d" skip="%d">',
                ['default', TestResultList.Count, ErrorCount, FailureCount, SkipCount]));
     for I := 0 to TestResultList.Count - 1 do
@@ -496,33 +477,36 @@ begin
       TestResult := TTestResult(TestResultList[I]);
       Seconds := TestResult.Time / 1000;
       case TestResult.ResultType of
-        rtOK:
-          Writeln(OutputFile,
+        TTestResultType.rtOK:
+          Lines.Add(
               Format('<testcase classname="%s" name="%s" time="%.3f"/>',
                      [TestResult.TestCaseName, TestResult.TestMethodName, Seconds]));
-        rtSkip:
+        TTestResultType.rtSkip:
         begin
-          Writeln(OutputFile,
+          Lines.Add(
               Format('<testcase classname="%s" name="%s" time="%.3f">',
                      [TestResult.TestCaseName, TestResult.TestMethodName, Seconds]));
-          Writeln(OutputFile, '<skipped/>');
-          Writeln(OutputFile, '</testcase>');
+          Lines.Add('<skipped/>');
+          Lines.Add('</testcase>');
         end;
       else
         begin
-          Writeln(OutputFile,
+          Lines.Add(
               Format('<testcase classname="%s" name="%s" time="%.3f">',
                      [TestResult.TestCaseName, TestResult.TestMethodName, Seconds]));
-          Writeln(OutputFile,
+          Lines.Add(
               Format('<failure type="%s">%s</failure>',
                      [TestResult.ErrorClassName, TestResult.ErrorMessage]));
-          Writeln(OutputFile, '</testcase>');
+          Lines.Add('</testcase>');
         end;
       end;
     end;
-    Writeln(OutputFile, '</testsuite>');
+    Lines.Add('</testsuite>');
+    // Delphi writes a UTF-8 BOM here; FPC 3.2 does not (WriteBOM is False
+    // by default). Both are valid UTF-8 XML.
+    Lines.SaveToFile(FileName, TEncoding.UTF8);
   finally
-    CloseFile(OutputFile);
+    Lines.Free;
   end;
 end;
 
@@ -547,21 +531,21 @@ end;
 
 function TTestRunner.GetFailureCount: Integer;
 begin
-  Result := GetResultCount(rtFail);
+  Result := GetResultCount(TTestResultType.rtFail);
 end;
 
 function TTestRunner.GetErrorCount: Integer;
 begin
-  Result := GetResultCount(rtError);
+  Result := GetResultCount(TTestResultType.rtError);
 end;
 
 function TTestRunner.GetSkipCount: Integer;
 begin
-  Result := GetResultCount(rtSkip);
+  Result := GetResultCount(TTestResultType.rtSkip);
 end;
 
 { TTextTestRunner }
-function TTextTestRunner.GetReusltMessage: String;
+function TTextTestRunner.GetResultMessage: String;
 var
   DetailMessageParts: TStringList;
   DetailMessagePart, DetailMessage: String;
@@ -604,10 +588,10 @@ var
   ResultMark: String;
 begin
   case TestResult.ResultType of
-    rtOK: ResultMark := '.';
-    rtFail: ResultMark := 'F';
-    rtError: ResultMark := 'E';
-    rtSkip: ResultMark := 'S';
+    TTestResultType.rtOK: ResultMark := '.';
+    TTestResultType.rtFail: ResultMark := 'F';
+    TTestResultType.rtError: ResultMark := 'E';
+    TTestResultType.rtSkip: ResultMark := 'S';
   else
     ResultMark := '?';
   end;
@@ -620,8 +604,10 @@ var
 begin
   Writeln(DupeString('=', 70));
   case TestResult.ResultType of
-    rtFail: ResultTypeString := 'FAIL';
-    rtError: ResultTypeString := 'ERROR';
+    TTestResultType.rtFail: ResultTypeString := 'FAIL';
+    TTestResultType.rtError: ResultTypeString := 'ERROR';
+  else
+    ResultTypeString := '';
   end;
   Writeln(Format('%s: %s (%s)', [ResultTypeString, TestResult.TestMethodName, TestResult.TestCaseName]));
   Writeln(DupeString('-', 70));
@@ -645,13 +631,13 @@ begin
   for I := 0 to FTestResultList.Count - 1 do
   begin
     TestResult := TTestResult(FTestResultList[I]);
-    if TestResult.ResultType in [rtFail, rtError] then
+    if TestResult.ResultType in [TTestResultType.rtFail, TTestResultType.rtError] then
       WriteTestResultDetail(TestResult);
   end;
   Writeln(DupeString('-', 70));
   Writeln(Format('Ran %d tests in %.3fs', [TestResultList.Count, Seconds]));
   Writeln('');
-  Writeln(GetReusltMessage);
+  Writeln(GetResultMessage);
 end;
 
 procedure TTextTestRunner.Run(TestSuite: TTestSuite);

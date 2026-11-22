@@ -22,3 +22,10 @@ jobs:
         working-directory: ./src/fpc
         run: |
           make test
+      - name: upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-fpc
+          path: src/fpc/ArgumentParserTest.xml
+          if-no-files-found: error
