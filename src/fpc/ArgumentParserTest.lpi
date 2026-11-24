@@ -37,15 +37,15 @@
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="..\common\Nullpobug.UnitTest.pas"/>
+        <Filename Value="..\Nullpobug.UnitTest.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit1>
       <Unit2>
-        <Filename Value="..\common\Nullpobug.ArgumentParser.pas"/>
+        <Filename Value="..\Nullpobug.ArgumentParser.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
-        <Filename Value="..\common\Nullpobug.ArgumentParserTest.pas"/>
+        <Filename Value="..\Nullpobug.ArgumentParserTest.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
     </Units>
@@ -54,8 +54,8 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <SearchPaths>
-      <IncludeFiles Value="..\common"/>
-      <OtherUnitFiles Value="..\common"/>
+      <IncludeFiles Value=".."/>
+      <OtherUnitFiles Value=".."/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>

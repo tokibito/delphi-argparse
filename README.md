@@ -2,13 +2,14 @@
 
 [![FPC](https://github.com/tokibito/delphi-argparse/actions/workflows/fpc.yml/badge.svg)](https://github.com/tokibito/delphi-argparse/actions/workflows/fpc.yml)
 [![Delphi](https://github.com/tokibito/delphi-argparse/actions/workflows/delphi.yml/badge.svg)](https://github.com/tokibito/delphi-argparse/actions/workflows/delphi.yml)
+[![Puy](https://github.com/tokibito/delphi-argparse/actions/workflows/puy.yml/badge.svg)](https://github.com/tokibito/delphi-argparse/actions/workflows/puy.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A small command line argument parser for Delphi and Free Pascal (FPC),
 inspired by Python's `argparse`.
 
 The whole library is a single unit with no dependencies other than the RTL:
-[`src/common/Nullpobug.ArgumentParser.pas`](src/common/Nullpobug.ArgumentParser.pas).
+[`src/Nullpobug.ArgumentParser.pas`](src/Nullpobug.ArgumentParser.pas).
 
 ## Features
 
@@ -24,10 +25,15 @@ The whole library is a single unit with no dependencies other than the RTL:
 * Free Pascal 3.2 or later (tested with 3.2.2 on x86_64 Linux)
   * The bundled tests are built with Lazarus `lazbuild` and assume a 64-bit target.
 
+The repository also builds as is with [Puy](https://crates.io/crates/puy), an
+Object Pascal implementation modeled on Delphi: from the repository root,
+`puy run src/delphi/ArgumentParserTest.dpr` runs the tests and
+`puy run src/delphi/Example/ArgumentParserExample.dpr -- --foo -b 123 abc` runs the example.
+
 ## Installation
 
-Copy `src/common/Nullpobug.ArgumentParser.pas` into your project
-(or add `src/common` to the search path) and add the unit to `uses`:
+Copy `src/Nullpobug.ArgumentParser.pas` into your project
+(or add `src` to the search path) and add the unit to `uses`:
 
 ```pascal
 uses

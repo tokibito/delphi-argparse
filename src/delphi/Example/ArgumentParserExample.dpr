@@ -4,7 +4,7 @@ program ArgumentParserExample;
 
 uses
   System.SysUtils,
-  Nullpobug.ArgumentParser in '..\..\common\Nullpobug.ArgumentParser.pas';
+  Nullpobug.ArgumentParser in '..\..\Nullpobug.ArgumentParser.pas';
 
 var
   Parser: TArgumentParser;

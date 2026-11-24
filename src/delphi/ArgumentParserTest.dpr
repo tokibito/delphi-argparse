@@ -3,9 +3,9 @@ program ArgumentParserTest;
 {$APPTYPE CONSOLE}
 
 uses
-  Nullpobug.UnitTest in '..\common\Nullpobug.UnitTest.pas',
-  Nullpobug.ArgumentParser in '..\common\Nullpobug.ArgumentParser.pas',
-  Nullpobug.ArgumentParserTest in '..\common\Nullpobug.ArgumentParserTest.pas';
+  Nullpobug.UnitTest in '..\Nullpobug.UnitTest.pas',
+  Nullpobug.ArgumentParser in '..\Nullpobug.ArgumentParser.pas',
+  Nullpobug.ArgumentParserTest in '..\Nullpobug.ArgumentParserTest.pas';
 
 begin
   Nullpobug.UnitTest.RunTest('ArgumentParserTest.xml');

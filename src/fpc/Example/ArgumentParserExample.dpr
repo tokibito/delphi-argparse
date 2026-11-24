@@ -22,7 +22,7 @@ uses
   {$ELSE}
     SysUtils,
   {$ENDIF}
-  Nullpobug.ArgumentParser in '..\..\common\Nullpobug.ArgumentParser.pas';
+  Nullpobug.ArgumentParser in '..\..\Nullpobug.ArgumentParser.pas';
 
 var
   Parser: TArgumentParser;

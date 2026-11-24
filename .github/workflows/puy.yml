@@ -1,0 +1,22 @@
+name: Puy
+
+on:
+  - push
+
+jobs:
+  puy:
+    name: Puy (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Puy
+        run: |
+          cargo install puy --locked
+          puy --version
+      - name: run tests
+        run: |
+          puy run src/delphi/ArgumentParserTest.dpr
+      - name: run example
+        run: |
+          puy run src/delphi/Example/ArgumentParserExample.dpr -- --foo -b 123 abc def

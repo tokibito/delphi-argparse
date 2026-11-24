@@ -6,6 +6,13 @@ The parser API and behavior are unchanged, apart from the leak fix below.
 
 ### Changed
 
+- **The shared units moved from `src/common/` to `src/`**:
+  `src/Nullpobug.ArgumentParser.pas`, `src/Nullpobug.ArgumentParserTest.pas`
+  and `src/Nullpobug.UnitTest.pas`. If you copy the unit or add its directory
+  to your search path, use the new path. The unit sources are unchanged.
+  An empty `puy.toml` at the repository root lets
+  [Puy](https://crates.io/crates/puy) build the tests and the example as is,
+  and CI runs them with Puy too (`puy.yml`).
 - **Enumeration values are qualified with their type name** throughout the
   sources and the README: `TStoreAction.saBool`, `TStoreAction.saStore`,
   `TTestResultType.rtOK` and so on, including `case` labels, default

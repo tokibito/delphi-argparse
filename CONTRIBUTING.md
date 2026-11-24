@@ -11,11 +11,12 @@ documentation — is written in English.
 
 | Path | Contents |
 | --- | --- |
-| `src/common/Nullpobug.ArgumentParser.pas` | The library. This single unit is what users copy into their projects. |
-| `src/common/Nullpobug.ArgumentParserTest.pas` | The tests. |
-| `src/common/Nullpobug.UnitTest.pas` | The small test framework the tests run on. |
+| `src/Nullpobug.ArgumentParser.pas` | The library. This single unit is what users copy into their projects. |
+| `src/Nullpobug.ArgumentParserTest.pas` | The tests. |
+| `src/Nullpobug.UnitTest.pas` | The small test framework the tests run on. |
 | `src/delphi/` | Delphi test project, example and Makefiles. |
 | `src/fpc/` | Free Pascal / Lazarus test project, example and Makefile. |
+| `puy.toml` | Marks the repository root for [Puy](https://crates.io/crates/puy), which takes `src/` as the source root and names units by their path under it. |
 
 The library and the tests are shared between Delphi and FPC. A change to them
 has to compile and pass on both.
@@ -50,13 +51,27 @@ and writes the results to `ArgumentParserTest.xml` in JUnit format, encoded in
 UTF-8 (with a byte order mark on Delphi, without one on FPC). A failing test makes the process exit with a
 non-zero code.
 
+### Puy
+
+[Puy](https://crates.io/crates/puy) is installed with `cargo install puy`.
+From the repository root:
+
+```
+$ puy run src/delphi/ArgumentParserTest.dpr
+$ puy run src/delphi/Example/ArgumentParserExample.dpr -- --foo -b 123 abc def
+```
+
+Puy derives unit names from the path under `src/`, so the shared units have to
+stay directly in `src/`.
+
 ### In CI
 
-GitHub Actions runs both on every push: `fpc.yml` on `ubuntu-latest`, and
-`delphi.yml` with Delphi XE4 on a self-hosted Windows runner. The Delphi job
+GitHub Actions runs all three on every push: `fpc.yml` and `puy.yml` on
+`ubuntu-latest`, and `delphi.yml` with Delphi XE4 on a self-hosted Windows
+runner. The Delphi job
 also builds both `.dproj` files with `msbuild` for Win32 and Win64, so a
-change to a `.dpr` that is not reflected in its `.dproj` fails there. Each
-job uploads its `ArgumentParserTest.xml` as an artifact (`test-results-fpc`,
+change to a `.dpr` that is not reflected in its `.dproj` fails there. The FPC and
+Delphi jobs upload their `ArgumentParserTest.xml` as an artifact (`test-results-fpc`,
 `test-results-delphi`).
 
 If you have only one of the two compilers, say which one you tested with in the
